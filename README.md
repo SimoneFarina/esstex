@@ -12,6 +12,14 @@ ESS LaTeX Beamer Style
  * https://bitbucket.org/europeanspallationsource/ess-latex
  * https://bitbucket.org/europeanspallationsource/ess-latex-templates
 
+# Makefile for this
+
+* There is a good Makefile for LaTeX, one should check the following site:
+ * https://github.com/shiblon/latex-makefile
+
+* Note that, in order to work with esstex-template.tex, one should use latex instead of pdflatex
+
+
 # Contact
 
 * (Jeong) Han Lee
