@@ -1,0 +1,85 @@
+%%
+%%
+%%   LaTeX Beamer for ESS Presentation template
+%%
+%%   Jeong Han Lee, han.lee@esss.se
+%%
+%%   v0.1 created Monday, Monday, November 23 09:07:19 CET 2015, jhlee
+%%
+%%
+
+\documentclass[
+  9pt,
+  table,
+  %serif,
+  %handout
+  ignorenonframetext
+]{beamer}
+
+
+\usepackage{esstex} 
+
+
+\meetingname{AAA  meeting}
+\meetingcity{Lund}
+\meetingcountry{Sweden}
+\totalpagenumber{\inserttotalframenumber}
+%% %\totalpagenumber{13+}
+
+
+\title{Here is the title of what I want to present}
+\author{Jeong \textbf{Han} Lee}%\inst{1}}
+\institute{
+  Integrated Control System Division\\
+  \textbf{ESS}, Sweden
+}
+\date{\today}%{May 27, 2015}
+
+
+\begin{document}
+\begin{frame}[plain]
+  \titlepage
+\end{frame}
+
+\begin{frame}{Test 1}
+  \begin{block}{Block}
+    \begin{itemize}
+    \item A
+    \item B
+    \item C
+    \end{itemize}
+  \end{block}
+  \begin{exampleblock}{Example block}
+    \begin{itemize}
+    \item A
+    \item B
+    \item C
+    \end{itemize}
+  \end{exampleblock}
+\end{frame}
+
+
+
+
+\begin{frame}{A Page for a picture}
+  \includegraphics[width=1.02\columnwidth]{./pictures/xchicane.eps}
+\end{frame}
+
+
+\begin{frame}[plain]
+  \begin{center}
+            {\LARGE Tack!}  \\\vspace{6mm}
+            {\LARGE 감사합니다!}\\\vspace{6mm}
+            {\LARGE Thank you!}  \\\vspace{6mm}
+            {\LARGE Dankesch\"on!} \\\vspace{6mm}
+ %          {\LARGE  謝謝！} \\\vspace{6mm}
+ %                   {\LARGE ¡Gracias!}\\\vspace{6mm}
+ %                   {\LARGE Merci!}\\\vspace{6mm}
+ %           \korfont{\LARGE ありがとう!}\\\vspace{6mm}
+                    {\LARGE \smiley } 
+  \end{center}
+  
+\end{frame}
+
+
+\end{document}
