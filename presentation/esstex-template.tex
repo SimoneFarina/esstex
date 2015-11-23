@@ -9,22 +9,19 @@
 %%
 
 \documentclass[
-  9pt,
-  table,
-  %serif,
-  %handout
-  ignorenonframetext
+  9pt
+  , table
+  , ignorenonframetext
 ]{beamer}
 
 
 \usepackage{esstex} 
 
-
 \meetingname{AAA  meeting}
 \meetingcity{Lund}
 \meetingcountry{Sweden}
 \totalpagenumber{\inserttotalframenumber}
-%% %\totalpagenumber{13+}
+%\totalpagenumber{13+}
 
 
 \title{Here is the title of what I want to present}
@@ -37,9 +34,11 @@
 
 
 \begin{document}
+ 
 \begin{frame}[plain]
   \titlepage
 \end{frame}
+
 
 \begin{frame}{Test 1}
   \begin{block}{Block}
@@ -61,8 +60,9 @@
 
 
 
-\begin{frame}{A Page for a picture}
-  \includegraphics[width=1.02\columnwidth]{./pictures/xchicane.eps}
+\begin{frame}
+  \frametitle{A Page for a picture}
+  \includegraphics[width=\columnwidth]{./pictures/xchicane.eps}
 \end{frame}
 
 
@@ -72,11 +72,9 @@
             {\LARGE 감사합니다!}\\\vspace{6mm}
             {\LARGE Thank you!}  \\\vspace{6mm}
             {\LARGE Dankesch\"on!} \\\vspace{6mm}
- %          {\LARGE  謝謝！} \\\vspace{6mm}
- %                   {\LARGE ¡Gracias!}\\\vspace{6mm}
- %                   {\LARGE Merci!}\\\vspace{6mm}
- %           \korfont{\LARGE ありがとう!}\\\vspace{6mm}
-                    {\LARGE \smiley } 
+%            {\LARGE ¡Gracias!}\\\vspace{6mm}
+%            {\LARGE Merci!}\\\vspace{6mm}
+             {\LARGE \smiley } 
   \end{center}
   
 \end{frame}
