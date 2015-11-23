@@ -30,3 +30,5 @@ doc_*
 *.alg
 *.ist
 Makefile
+*.nav
+*.snm
