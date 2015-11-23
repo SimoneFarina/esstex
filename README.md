@@ -9,8 +9,9 @@ ESS LaTeX Beamer Style
 
 * Please loot at other ess latex activites on bitbucket :
 
- ** https://bitbucket.org/europeanspallationsource/ess-latex
- ** https://bitbucket.org/europeanspallationsource/ess-latex-templates
+ * https://bitbucket.org/europeanspallationsource/ess-latex
+
+ * https://bitbucket.org/europeanspallationsource/ess-latex-templates
 
 # Contact
 
