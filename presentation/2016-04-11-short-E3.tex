@@ -1,0 +1,77 @@
+%%
+%%
+%%   LaTeX Beamer for ESS Presentation template
+%%
+%%   Jeong Han Lee, han.lee@esss.se
+%%
+%%   v0.1 created Monday, Monday, November 23 09:07:19 CET 2015, jhlee
+%%
+%%
+
+\documentclass[
+  8pt
+  , table
+  , ignorenonframetext
+]{beamer}
+
+
+\usepackage{esstex} 
+
+\meetingname{ICS}
+\meetingcity{Lund}
+\meetingcountry{Sweden}
+\totalpagenumber{\inserttotalframenumber}
+%\totalpagenumber{13+}
+
+
+\title{Extreme Short Explanation \\ of ESS EPICS Environment}
+\author{Jeong \textbf{Han} Lee}%\inst{1}}
+\institute{
+  han.lee@esss.se\\
+  Integrated Control System Division\\
+  \textbf{ESS}, Sweden
+}
+\date{\today}%{May 27, 2015}
+
+
+\begin{document}
+ 
+\begin{frame}[plain]
+ \titlepage
+\end{frame}
+
+
+\begin{frame}{EPICS Environment}
+  There is no generic EPICS environment, and each lab has its own environment historically. Historically, many labs use more than one EPICS release and drivers should be built for all EPICS releases in parallel
+  \begin{block}{Loadable Driver Module (LDM) at PSI}
+    \begin{itemize}
+    \item Build drivers for multiple releases of EPICS, and load drivers dynamically from startup script.
+    \item is used to run PSI machine since 2005, which is the first presentation in the community.
+    \end{itemize}
+  \end{block}
+
+  \begin{exampleblock}{ESS EPICS Environment}
+    \begin{itemize}
+    \item has been evolved from LDM in cooperation with Dirk Zimoch at PSI.
+    \item provides a collection of scripts to develop, build, and deploy an EPICS IOC.
+    \item provides customized solutions to run different configurations at the same time and in the same machine, to test next releases of IOCs independently, and to switch the old and new versions of an IOC easily and quickly.
+    \end{itemize}
+  \end{exampleblock}
+\end{frame}
+
+
+\begin{frame}{Current Issues}
+  So far we've developed EEE with limited resources and cases. We would like to improve EEE more flexible and transparent than before in this year.
+  
+  \begin{itemize}
+  \item We should clean up old CODAC history in our git source code repositories. 
+  \item It works seamlessly, if we define everything (HW, SW, environment) before building an IOC. But in the development period, from time to time we are facing many unidentified situations. In these situations, it might take more time than what we expected.
+  \item It works only on CentOS. Technically, it works with any Linux distribution, and we are starting slowly to develop a better way to make EEE works in any Linux distribution to compatible with the generic EPICS base and modules.
+  \item Git and remote collaboration models are weak, need to expand the original ideas to be more beneficial to ESS, IKS, and EPICS community.
+  \item We do not have a concrete procedure for EPICS environment deployment for ICS, ESS, and IKC (in terms of CentOS, IOCFactory, CCDB, Naming Service, any EEE servers, any EEE clients, git repositories, and EPICS community works).
+  \end{itemize}
+\end{frame}
+
+
+
+\end{document}
