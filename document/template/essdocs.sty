@@ -1,9 +1,23 @@
-% Author:   Jeong Han Lee
-% email :   jeonghan.lee@gmail.com
-% Date:     Tuesday, July 12 16:31:28 CEST 2016
+%  Copyright (c) Jeong Han Lee
 %
-% History:
-% 0.1       Tuesday, July 12 16:31:36 CEST 2016,
+%  This essdocs.sty is free software: you can redistribute
+%  it and/or modify it under the terms of the GNU General Public License
+%  as published by the Free Software Foundation, either version 2 of the
+%  License, or any newer version.
+%
+%  This program is distributed in the hope that it will be useful, but WITHOUT
+%  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+%  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+%  more details.
+%
+%  You should have received a copy of the GNU General Public License along with
+%  this program. If not, see https://www.gnu.org/licenses/gpl-2.0.txt
+
+%  Author:   Jeong Han Lee
+%  email :   jeonghan.lee@gmail.com
+%  Date  :   Wednesday, July 13 12:46:07 CEST 2016
+%
+%
 
 
 \NeedsTeXFormat{LaTeX2e}
@@ -38,10 +52,10 @@
 \RequirePackage{ifpdf}
 \RequirePackage{alltt}
 \RequirePackage{listings}
-\RequirePackage{kotex}
+%\RequirePackage{kotex}
 \RequirePackage{url}
-\usepackage{multicol}
-%\usepackage[utf]{kotex}
+\RequirePackage{soulutf8}
+%\RequirePackage{fancyhdr}
 
 %\RequirePackage{datetime}
 %\RequirePackage{fmtcount}
@@ -62,7 +76,7 @@
 \geometry{bindingoffset=0mm}
 \geometry{hmarginratio=1:1}
 \special{papersize=210mm,297mm}
-
+\geometry{head=90pt}
 %\geometry{letter}
 %\special{papersize=215.9mm,279.4mm}
 
@@ -71,165 +85,143 @@
 %\microtypesetup{draft=false, final}
 
 
-
 % includegraphics default image width option
 \setkeys{Gin}{width=0.99\textwidth} 
 
-
 % more space between rows in table 1.2 or 1.3 is recommended
-\makeatletter
-\renewcommand{\arraystretch}{1.1}
-\makeatother
+\renewcommand{\arraystretch}{1.2}
 
 % Change Figure, Table, Listing as bold...
-\makeatletter
 \renewcommand\fnum@figure[1]{\textbf{\figurename~\thefigure~}}
 \renewcommand\fnum@table[1]{\textbf{\tablename~\thetable~} }
 \renewcommand\fnum@lstlisting[1]{\textbf{\lstlistingname~\thelstlisting~} } % page.34 in the Listings Package
-\makeatother
+
 
 %% http://tex.stackexchange.com/questions/33841/how-to-modify-the-indentation-before-sectioning-titles-in-the-table-of-contents
-\makeatletter
-     \renewcommand*\l@figure{\@dottedtocline{1}{1em}{3.2em}}
-     \renewcommand*\l@table{\@dottedtocline{1}{1em}{3.2em}}
-     \renewcommand*\l@lstlisting{\@dottedtocline{1}{1em}{3.2em}}
-\makeatother
+\renewcommand*\l@figure{\@dottedtocline{1}{1em}{3.2em}}
+\renewcommand*\l@table{\@dottedtocline{1}{1em}{3.2em}}
+\renewcommand*\l@lstlisting{\@dottedtocline{1}{1em}{3.2em}}
 
 
-\makeatletter    
-\pagestyle{myheadings}
-\makeheadrule{myheadings}{\textwidth}{\normalrulethickness}
-\renewcommand{\chaptermark}[1]% 
-             {\markboth{\thechapter. \ #1}{} }
+%% %% memoir has \thelastpage and \thelastsheet
+%% %%
+\makepagestyle{pstyle}
+\makeevenhead{pstyle}{
+  \noindent
+  {\miniscule
+    \begin{tabular}{ll}
+      Description     & \@essdocdesc \\
+      Document number & \@essdocnum \\
+      Date            & \@date \\
+      Revision        & \@essdocrev \\
+      State           & \@essdocstate \\
+      Classification  & \@essdocclass
+    \end{tabular}
+  }
+}{}{}
+\makeoddhead{pstyle}{
+  \noindent
+  {\miniscule
+    \begin{tabular}{ l l }
+      Description     & \@essdocdesc \\
+      Document number & \@essdocnum \\
+      Date            & \@date \\
+      Revision        & \@essdocrev \\
+      State           & \@essdocstate \\
+      Classification  & \@essdocclass
+    \end{tabular}
+  }
+}{}{}
+\makeevenfoot{pstyle}{}{\thepage~(\thelastpage)}{}
+\makeoddfoot{pstyle}{}{\thepage~(\thelastpage)}{}
+\pagestyle{pstyle}
+
+%\pagestyle{plain}
+%\pagestyle{myheadings}
+%\makeheadrule{myheadings}{\textwidth}{
+%   \normalrulethickness
+%}
+%\renewcommand{\chaptermark}[1]% 
+%             {\markboth{\thechapter. \ #1}{} }
 %% \renewcommand{\sectionmark}[1]% 
 %%              {\markright{ \thesection. \ #1}{} }
 %% \newcommand \headerfont  {\fontsize{10pt}{10pt} \fontfamily{ppl} \selectfont}
-%% \newcommand \thepagefont {\fontsize{10pt}{10pt} \bfseries }
-\makeatother   
+             %% \newcommand \thepagefont {\fontsize{10pt}{10pt} \bfseries }
+             
+
+%% ESS specified commands
+             
+\def\reviewer#1{\def\@reviewer{#1}}
+\def\owner#1{\def\@owner{#1}}
+\def\approver#1{\def\@approver{#1}}
+\def\essdocdesc#1{\def\@essdocdesc{#1}}
+\def\essdocnum#1{\def\@essdocnum{#1}}
+\def\essdocrev#1{\def\@essdocrev{#1}}
+\def\essdocstate#1{\def\@essdocstate{#1}}
+\def\essdocclass#1{\def\@essdocclass{#1}}
 
 
-%% \makeatletter
-%% \renewcommand*{\maketitle}{%
-%%   \begin{titlepage}
-%%     \thispagestyle{empty}
-%%   \null
-%%   \begin{minipage}{0.2\textwidth}
-%%     \begin{flushleft}
-%%     \includegraphics[width=4cm,angle=0]{./figs/ESS_Logo_Frugal_Blue_cmyk.eps}
-%%     \end{flushleft}
-%%   \end{minipage}
-%%   \begin{minipage}{0.4\textwidth}
-%%     {\tiny
-%%       \begin{flushright}
-%%         \begin{tabular}{ l l }
-%%           Description &  \\
-%%           Document number & \\
-%%           Date & \\
-%%           Revision & \\
-%%           State & \\
-%%           Classification & \\
-%%           Page & \\
-%%         \end{tabular}
-%%       \end{flushright}
-%%       }
-%%   \end{minipage}
-%%   \vskip 4em%
-%%   \begin{center}%
-%%     \let \footnote \thanks
-%%     \rule[0.5ex]{\linewidth}{2pt}\vspace*{-\baselineskip}\vspace*{3.2pt}
-%%     \rule[0.5ex]{\linewidth}{1pt}\\[\baselineskip]
-%%          {\LARGE \@title \par}\\[4mm]
-%%      \rule[0.5ex]{\linewidth}{1pt}\vspace*{-\baselineskip}\vspace{3.2pt}
-%%      \rule[0.5ex]{\linewidth}{2pt}\\
-%%          \vskip 1.5em%
-%%     {\large
-%%       \lineskip .5em%
-%%       \begin{tabular}[t]{c}%
-%%         \@author
-%%       \end{tabular}\par}%
-%%     \vskip 1em%
-%%     %{\large \@date}%
-%%   \end{center}%
-%%   \par
-%%   \vskip 1.5em
-  
-%% %% {\raggedleft%
-%% %% 	\includegraphics[width=3cm]{example-image-16x9}\par
-%% %% }\vspace{1cm}
-%% %% 	\centering
-%% %% {\scshape\LARGE Columbidae University \par}
-%% %% \vspace{1cm}
-%% %% {\scshape\Large\@project\unskip\strut\par}
-%% %% \vspace{1.5cm}
-%% %% {\huge\bfseries\@title\unskip\strut\par}
-%% %% \vspace{2cm}
-%% %% {\Large\itshape\@author\unskip\strut\par}
-%% %% \vfill
-%% %% supervised by\par
-%% %% \@supervisor\unskip\strut\par
+%% ESS Specified Title Page
 
-%% %% \vfill
-
-%% %% {\large \@date\par}
-%% \end{titlepage}
-
-\makeatletter
-\renewcommand\maketitle{%
+\newcommand{\esstitle}{%
+  \begingroup
   \thispagestyle{empty}
-  \null
-  \begin{minipage}{0.2\textwidth}
-    \begin{flushleft}
-      \includegraphics[width=4cm,angle=0]{./figs/ESS_Logo_Frugal_Blue_cmyk.eps}
-    \end{flushleft}
+  \noindent
+  \begin{minipage}[c]{0.3\textwidth}
+    \includegraphics[width=1.0\textwidth,angle=0]{./figs/ESS_Logo_Frugal_Blue_cmyk.eps}
   \end{minipage}
-  \begin{minipage}{0.4\textwidth}
-    {\tiny
-      \begin{flushright}
-        \begin{tabular}{ l l }
-          Description &  \\
-          Document number & \\
-          Date & \\
-          Revision & \\
-          State & \\
-          Classification & \\
-          Page & \\
-        \end{tabular}
-      \end{flushright}
-      }
+  \begin{minipage}[c]{0.7\textwidth}
+    \flushright
+        {\miniscule
+          \begin{tabular}{ll}
+            Description     & \@essdocdesc \\
+            Document number & \@essdocnum \\
+            Date            & \@date \\
+            Revision        & \@essdocrev \\
+            State           & \@essdocstate \\
+            Classification  & \@essdocclass\\
+            Page            & \thepage~(\thelastpage)
+          \end{tabular}
+        }
   \end{minipage}
-  \vskip 4em%
-  \begin{center}
+  \vskip 8em
+  \noindent
+  \centering
   \rule[0.5ex]{\linewidth}{2pt}\vspace*{-\baselineskip}\vspace*{3.2pt}
   \rule[0.5ex]{\linewidth}{1pt}\\[\baselineskip]
-       {\LARGE \@title \par}\\[4mm]
-       \rule[0.5ex]{\linewidth}{1pt}\vspace*{-\baselineskip}\vspace{3.2pt}
-       \rule[0.5ex]{\linewidth}{2pt}\\
-       \vskip 1.5em%
-              {\large
-                \lineskip .5em%
-                \begin{tabular}[t]{c}%
-                  \@author
-                \end{tabular}\par}%
-              \vskip 1em%
+       {\Large \textbf{\@title}}\\[4mm]
+  \rule[0.5ex]{\linewidth}{1pt}\vspace*{-\baselineskip}\vspace{3.2pt}
+  \rule[0.5ex]{\linewidth}{2pt}\\
+  \vskip 8em%
+  \vfill
+  \begin{center}
+    \begin{tabular}{l|p{0.7\linewidth}}
+      \toprule
+      &  Name (Allilation) \\
+      \toprule
+      Author   & \@author    \\\midrule
+      Reviewer & \@reviewer  \\\midrule
+      Owner    & \@owner     \\\midrule
+      Approver & \@approver  \\\bottomrule
+    \end{tabular}
   \end{center}
-  \newpage
+  \vfill
+  \endgroup
 }
-\makeatother
 
-\makeatletter 
- \def\addlinecenter#1{%
-   \hbox to \hsize{%
+\def\addlinecenter#1{%
+  \hbox to \hsize{%
      \vbox{\centering #1}}}%
-\makeatother
+
 
 
 \hypersetup{
   , pdfstartview = {Fit}
   , pdfpagemode= {UseOutlines}
-%  , pdftitle    = {\inserttitle}
-%  , pdfauthor   = {\insertauthor}
-%  , pdfcreator  = {\insertauthor}
-%  , pdfproducer = {\insertauthor}
+  , pdftitle    = {\@title}
+  , pdfauthor   = {\@author}
+  , pdfcreator  = {\@author}
+  , pdfproducer = {\@author}
   , bookmarksnumbered = {true}
   , bookmarksopen = {false}
   , baseurl = {https://github.com/jeonghanlee/esstex}
@@ -246,11 +238,66 @@
 
 
 \hypersetup{breaklinks}
+
 % Declare figure/table as a subfloat.
 \newsubfloat{figure} % Subfigures
 \newsubfloat{table} % Subtables
 
 
-% Font with math support: New Century Schoolbook
-\usepackage{fouriernc}
-\usepackage[T1]{fontenc}
+%% Special for listings
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+ 
+%%%% This is for 
+\lstdefinestyle{termstyle}{
+  backgroundcolor=\color{backcolour}
+  , commentstyle=\color{codegreen}
+  , keywordstyle=\color{codegreen}
+  , numberstyle=\tiny\color{codegray}
+  , basicstyle=\scriptsize\ttfamily
+  , basewidth  = {0.5em,0.5em}
+  , breakatwhitespace=false
+  , breaklines=true
+%  , captionpos=b
+  , keepspaces=true
+%  , numbers=left                        % Line nums position
+%  , numberstyle=\tiny                   % Line-numbers fonts
+%  , stepnumber=1                        % Step between two line-numbers
+%  , numbersep=5pt                       % How far are line-numbers from code
+  , showspaces=false                    % Dont make spaces visible
+  , showtabs=false                      % Dont make tabls visible
+  , tabsize=3                           %  showspaces=false,                
+%  showstringspaces=false,
+  , morekeywords={root@faiserver}
+%  morekeywords={emacs, aptitude, cp, wget}
+}
+
+
+\lstdefinestyle{termstylenumber}{
+  backgroundcolor=\color{backcolour}
+  , commentstyle=\color{codegreen}
+  , keywordstyle=\color{codegreen}
+  , numberstyle=\tiny\color{codegray}
+  , basicstyle=\scriptsize\ttfamily
+  , basewidth  = {0.5em,0.5em}
+  , breakatwhitespace=false
+  , breaklines=true
+  , captionpos=b
+  , keepspaces=true
+  , numbers=left                        % Line nums position
+  , numberstyle=\tiny                   % Line-numbers fonts
+  , stepnumber=1                        % Step between two line-numbers
+%  , numbersep=5pt                       % How far are line-numbers from code
+  , showspaces=false                    % Dont make spaces visible
+  , showtabs=false                      % Dont make tabls visible
+  , tabsize=3                           %  showspaces=false,                
+%  showstringspaces=false,
+  , morekeywords={root@faiserver}
+%  morekeywords={emacs, aptitude, cp, wget}
+}
+
+\lstset{style=termstyle}
+\lstset{escapeinside={(*@}{@*)}}

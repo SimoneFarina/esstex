@@ -7,92 +7,62 @@
 ]{memoir}
 
 \usepackage{essdocs}
-
 \usepackage[numbers]{natbib}
 
-\usepackage{soulutf8}
-\definecolor{codegreen}{rgb}{0,0.6,0}
-\definecolor{codegray}{rgb}{0.5,0.5,0.5}
-\definecolor{codepurple}{rgb}{0.58,0,0.82}
-\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
- 
-
-\lstdefinestyle{termstyle}{
-  backgroundcolor=\color{backcolour}
-  , commentstyle=\color{codegreen}
-  , keywordstyle=\color{codegreen}
-  , numberstyle=\tiny\color{codegray}
-  , basicstyle=\scriptsize\ttfamily
-  , basewidth  = {0.5em,0.5em}
-  , breakatwhitespace=false
-  , breaklines=true
-%  , captionpos=b
-  , keepspaces=true
-%  , numbers=left                        % Line nums position
-%  , numberstyle=\tiny                   % Line-numbers fonts
-%  , stepnumber=1                        % Step between two line-numbers
-%  , numbersep=5pt                       % How far are line-numbers from code
-  , showspaces=false                    % Dont make spaces visible
-  , showtabs=false                      % Dont make tabls visible
-  , tabsize=3                           %  showspaces=false,                
-%  showstringspaces=false,
-  , morekeywords={root@faiserver}
-%  morekeywords={emacs, aptitude, cp, wget}
-}
-
-
-\lstdefinestyle{termstylenumber}{
-  backgroundcolor=\color{backcolour}
-  , commentstyle=\color{codegreen}
-  , keywordstyle=\color{codegreen}
-  , numberstyle=\tiny\color{codegray}
-  , basicstyle=\scriptsize\ttfamily
-  , basewidth  = {0.5em,0.5em}
-  , breakatwhitespace=false
-  , breaklines=true
-  , captionpos=b
-  , keepspaces=true
-  , numbers=left                        % Line nums position
-  , numberstyle=\tiny                   % Line-numbers fonts
-  , stepnumber=1                        % Step between two line-numbers
-%  , numbersep=5pt                       % How far are line-numbers from code
-  , showspaces=false                    % Dont make spaces visible
-  , showtabs=false                      % Dont make tabls visible
-  , tabsize=3                           %  showspaces=false,                
-%  showstringspaces=false,
-  , morekeywords={root@faiserver}
-%  morekeywords={emacs, aptitude, cp, wget}
-}
-
-
-\lstset{style=termstyle}
-\lstset{escapeinside={(*@}{@*)}}
-
 \begin{document}
-%\newcommand{\technumber}{
-%  \st{RAON Control-Document Series}\\
-%  \st{Revision : v1.1,   Release : June 18, 2014}}
-%  }
 
-\title{\textbf{MRF PCIe-EVR-300}}
+%% ESS Document Description
+%%
+\essdocdesc{test}
 
-\author{Jeong Han Lee\thanks{citadel.lee@gmail.com, I don't work for this project, but it should be good for FAI user community. }\\
-  \st{Rare Isotope Science Project}\\
-  \st{Institute for Basic Science, Daejeon, South Korea}
-}
+%% ESS Document Number
+%%
+\essdocnum{ESS-XXXXXXXX}
+
+%% Date
+%%
 \date{\today}
 
-%\renewcommand{\maketitlehooka}{\begin{flushright}\textsf{\technumber}\end{flushright}}
-%\renewcommand{\maketitlehookb}{\centering\textsf{\subtitle}}
-%\renewcommand{\maketitlehookc}{C}
-%\renewcommand{\maketitlehookd}{D}
+%% ESS Document Revision Number
+%%
+\essdocrev{0.9}
+
+%% ESS Document State
+%%
+\essdocstate{Draft}
+
+%% ESS Document Classification
+%%
+\essdocclass{ESS Use Only}
+
+%% Document Title
+%%
+\title{MRF PCIe-EVR-300}
+
+%% Document Author(s), if more than one author,
+%% use \newline instead of \\ or \linebreak in order to seperate them
+\author{Javier Cereijo Garcia \newline Jeong Han Lee }
+
+%% Document Reviewer(s) if more than one reviewer,
+%% use \newline instead of \\ or \linebreak in order to seperate them
+\reviewer{Timo Korhonen (Chief Engineer) \newline Timo Korhonen (Chief Engineer)}
+
+%% Document Owner(s) if more than one owner,
+%% use \newline instead of \\ or \linebreak in order to seperate them
+\owner{ICS}
+
+%% Document Approver(s) if more than one approver,
+%% use \newline instead of \\ or \linebreak in order to seperate them
+\approver{ICS}
 
 
-
-\maketitle
+\esstitle
+\newpage
 \tableofcontents
 \newpage
 
+
+%%% Actual Document Start at below
 
 \chapter{TEST}
 \section{Hardware setup and specification}
