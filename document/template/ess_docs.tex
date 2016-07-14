@@ -13,7 +13,7 @@
 
 %% ESS Document Description
 %%
-\essdocdesc{test}
+\essdocdesc{Engineering Manual}
 
 %% ESS Document Number
 %%
@@ -37,8 +37,8 @@
 
 %% Document Title
 %%
-\title{MRF PCIe-EVR-300}
-
+\title{ESS ICS Engineering Manual}
+\subtitle{for MRF PCIe-EVR-300}
 %% Document Author(s), if more than one author,
 %% use \newline instead of \\ or \linebreak in order to seperate them
 \author{Javier Cereijo Garcia \newline Jeong Han Lee }
@@ -62,28 +62,84 @@
 \newpage
 
 
+\begin{abstract}
+This document explains the process followed for testing the PCIe-EVR-300 by Micro-Research Finland (MRF) at ESS using the EEE. This document can be used to test new equipment at in-kind partners facilities or as step-by-step instructions to set up a basic EVR.
+\end{abstract}
+
+
 %%% Actual Document Start at below
 
 \chapter{TEST}
-\section{Hardware setup and specification}
-Tests made with:
+
+
+\section{Introduction}
+The PCIe-EVR-300 is an event receiver (EVR) for the MRF timing system. Its role is receiving and decoding the events emited by an event generator (EVG) through an optical cable and producing outputs based on those events.\\
+Due to the small size of the hardware, it only has a SFP module and a high density output connector to interface to an IFB-300, which has 16 universal outputs.\\
+The PCIe-EVR-300 is used in EPICS using the mrfioc2 \cite{MRFIOC2} driver.\\
+
+This document explains the process followed for testing the PCIe-EVR-300; it starts by describing the hardware list and setup for the tests and the test environment, followed by the startup configuration, the test goals, the tests done and their outputs. Finally a summary and conclusions are presented.
+
+
+\section{Test bench description}
+\subsection{Hardware list and specification}
+The hardware used for testing the PCIe-EVR-300 is:
 \begin{itemize}
 \item MRF PCIe-EVR-300
 	\begin{itemize}
 	\item TAG-146
 	\item Serial number K114029
 	\end{itemize}
-\item Installed in Kontron iPC in ESSIIP Control Rack in ICS lab (ics-essiip-01).
-\item Connected to MRF fan-out; master is cPCI EVG
-\item Using output module IFB-300
+\item PC with free PCIe slot
 	\begin{itemize}
+	\item Kontron iPC in ESSIIP Control Rack in ICS lab (ics-essiip-01)
+	\end{itemize}
+\item MRF IFB-300 output module and cable
+	\begin{itemize}
+	\item TAG-336
 	\item Serial number K472056
 	\end{itemize}
+\item MRF EVG
+	\begin{itemize}
+	\item cPCI-EVG-230
+	\item TAG-26
+	\item Serial number E283016
+	\end{itemize}
+\item MRF Fan-out
+	\begin{itemize}
+	\item cPCI-FOUT-12
+	\item TAG-27
+	\item Serial number H385013 
+	\end{itemize}
+\item Optical cables
+\item Oscilloscope
+\item LEMO cable and LEMO to BNC adaptor
 \end{itemize}
 
 
-\section{PCI information} 
-\begin{verbatim}
+\subsection{Hardware setup}
+The phisical setup of the hardware is shown in figure \ref{fig:diagram}.
+\begin{figure}[!ht]
+  \centering
+    \includegraphics[width=0.8\textwidth]{./pictures/pcie_network.eps}
+  \caption{Hardware setup}
+  \label{fig:diagram}
+\end{figure}
+
+
+\subsection{Test environment description}
+\begin{itemize}
+\item OS: CentOS Linux release 7.1.1503 (Core)
+\item Kernel release: 3.10.0-229.7.2.rt56.141.6.el7.centos.x86\textunderscore 64
+\item EEE version 1.8.0
+\item EPICS base 3.14.12.5
+\item mrfioc2 version 3.0.0
+\item EVR FPGA FW version 0x17000008
+\end{itemize}
+
+
+\subsection{PCI information}
+The output of \verb|lspci| for the PCIe-EVR-300 is:
+\begin{lstlisting}
 $ lspci -s 05:00 -vv
 05:00.0 Signal processing controller: Lattice Semiconductor Corporation Device
         ec30 (rev 01)
@@ -101,9 +157,11 @@ $ lspci -s 05:00 -vv
 $ lspci -s 05:00 -t
 -+-[0000:05]---00.0
  \-[0000:00]-
-\end{verbatim}
-The PCI information available from the IOC is:
-\begin{verbatim}
+\end{lstlisting}
+
+The PCI information available from EPICS is:
+
+\begin{lstlisting}
 ics-essiip-01> devPCIShow 9 0x1204
 PCI 0000:05:00.0 IRQ 16
   vendor:device 1204:ec30 rev 00
@@ -112,30 +170,20 @@ PCI 0000:05:00.0 IRQ 16
   driver mrf-pci
   BAR 0 32-bit MMIO      1 MB
 Matched 1 devices
-\end{verbatim}
+\end{lstlisting}
 
 
-\section{Description of the test environment}
-\begin{itemize}
-\item OS: CentOS Linux release 7.1.1503 (Core)
-\item Kernel release: 3.10.0-229.7.2.rt56.141.6.el7.centos.x86\textunderscore 64
-\item EEE version 1.8.0
-\item EPICS base 3.14.12.5
-\item mrfioc2 version 3.0.0
-\item FW version 0x17000008
-\item evr-pcie-300.db (/opt/epics/modules/mrfioc2/3.0.0/db/evr-pcie-300.db)
-\end{itemize}
+\subsection{Startup configuration}
+The database used is evr-pcie-300.db and can be founf in the EEE in \newline
+\texttt{/opt/epics/modules/mrfioc2/3.0.0/db/evr-pcie-300.db}.
 
+The cPCI EVG is set to send event 14 at 14 Hz with an event clock frequency of 88.0525 MHz.
+Since this frequency is different to the default in \texttt{evr-pcie-300.db}, the file is copied to the current folder and the link clock frequency is set to 88.0525 MHz (line 111): \texttt{field( VAL , "\$(Link-Clk-SP=88.0525,undefined)")}
 
-\section{Startup configuration}
-The cPCI EVG is set to send event 14 at 14 Hz and event clock frequency of 88.0525 MHz.\\
-Since this frequency is different to the default in \verb|evr-pcie-300.db|, the file is copied to the current folder and the link clock frequency is set to 88.0525 MHz (line 111):\\
-\verb|field( VAL , "$(Link-Clk-SP=88.0525,undefined)")|\\
-
-MRF kernel module loaded with:\\\verb|$modprobe mrf|\\
+MRF kernel module loaded with: \texttt{\$modprobe mrf}
 
 Startup script:
-\begin{verbatim}
+\begin{lstlisting}
 epicsEnvSet("SYS"             "SYS0")
 epicsEnvSet("EVR"             "EVR0")
 epicsEnvSet("EVR_PCIDOMAIN"   "0")
@@ -145,22 +193,21 @@ epicsEnvSet("EVR_PCIFUNCTION" "0")
 
 require mrfioc2
 
-mrmEvrSetupPCI($(EVR), $(EVR_PCIDOMAIN), $(EVR_PCIBUS), $(EVR_PCIDEVICE),
-        $(EVR_PCIFUNCTION))
+mrmEvrSetupPCI($(EVR), $(EVR_PCIDOMAIN), $(EVR_PCIBUS), $(EVR_PCIDEVICE), $(EVR_PCIFUNCTION))
 
 dbLoadRecords("./evr-pcie-300.db", "EVR=$(EVR), SYS=$(SYS)")
-\end{verbatim}
+\end{lstlisting}
 
 It is possible that the IOC registration function fails:
-\begin{verbatim}
+\begin{lstlisting}
 mrmEvrSetupPCI(EVR0, 0, 0x5, 0x0, 0)
 Device EVR0  5:0.0
 Using IRQ 16
 Can neither open resource file nor uio file of PCI device 0000:05:00.0 BAR 0
 PCI error: Failed to map BARs 0 for EC 30
-\end{verbatim}
+\end{lstlisting}
 The solution can be found in the "Timing System: User Manual - Troubleshooting" wiki page \cite{TSESSWIKI}. Then the output should look like:
-\begin{verbatim}
+\begin{lstlisting}
 $ iocsh test1.cmd 
 /opt/epics/bases/base-3.14.12.5/bin/centos7-x86_64/softIoc -D
        /opt/epics/bases/base-3.14.12.5/dbd/softIoc.dbd /tmp/iocsh.startup.14439
@@ -172,10 +219,8 @@ $ iocsh test1.cmd
 #SHELLBOX=""
 #EPICS_CA_ADDR_LIST=""
 #EPICS_MODULE_INCLUDE_PATH=".:/usr/lib64:/usr/lib:/lib64:/lib"
-dlload         /opt/epics/modules/environment/1.8.0/3.14.12.5/lib/
-        centos7-x86_64/libenvironment.so
-dbLoadDatabase /opt/epics/modules/environment/1.8.0/3.14.12.5/dbd/
-        environment.dbd
+dlload         /opt/epics/modules/environment/1.8.0/3.14.12.5/lib/centos7-x86_64/libenvironment.so
+dbLoadDatabase /opt/epics/modules/environment/1.8.0/3.14.12.5/dbd/environment.dbd
 environment_registerRecordDeviceDriver
 < "test1.cmd"
 epicsEnvSet("SYS"             "SYS0")
@@ -186,12 +231,10 @@ epicsEnvSet("EVR_PCIDEVICE"   "0x0")
 epicsEnvSet("EVR_PCIFUNCTION" "0")
 require mrfioc2
 require: mrfioc2 depends on devlib2 (2.6+).
-require: Loading library /opt/epics/modules/devlib2/2.6.0/3.14.12.5/lib/
-        centos7-x86_64/libdevlib2.so.
+require: Loading library /opt/epics/modules/devlib2/2.6.0/3.14.12.5/lib/centos7-x86_64/libdevlib2.so.
 require: Loading /opt/epics/modules/devlib2/2.6.0/3.14.12.5/dbd/devlib2.dbd.
 require: Calling devlib2_registerRecordDeviceDriver function.
-require: Loading library /opt/epics/modules/mrfioc2/3.0.0/3.14.12.5/lib/
-        centos7-x86_64/libmrfioc2.so.
+require: Loading library /opt/epics/modules/mrfioc2/3.0.0/3.14.12.5/lib/centos7-x86_64/libmrfioc2.so.
 require: Adding /opt/epics/modules/mrfioc2/3.0.0/db.
 require: Adding /opt/epics/modules/mrfioc2/3.0.0/startup.
 require: Loading /opt/epics/modules/mrfioc2/3.0.0/3.14.12.5/dbd/mrfioc2.dbd.
@@ -214,13 +257,19 @@ Starting iocInit
 ## EPICS R3.14.12.5-2015-08 $Date: Tue 2015-03-24 09:57:35 -0500$
 ## EPICS Base built Oct  9 2015
 ############################################################################
-\end{verbatim}
+\end{lstlisting}
 
 
-\section{Test 1 - checking the EVR-EVG link and setting event clock and link frequency}
-\begin{verbatim}
+\section{PCIe-EVR-300 testing}
+****************************************\\
+The tests will have three parts: in the first one, the link between the EVG and the EVR is checked, and we check that the EVR is capable of synchronizing its frequency to the EVG; in the second test we check that the EVR is capable of receiving and acknowledging events; and finally we test the outputs.\\
+****************************************\\
+
+\subsection{Test 1 - checking the EVR-EVG link and setting event clock and link frequency}
+\begin{lstlisting}
 $ caget SYS0-EVR0:Link-Sts
 SYS0-EVR0:Link-Sts             OK
+  
 $ caget SYS0-EVR0:Link-Clk-I
 SYS0-EVR0:Link-Clk-I           88.0519
 $ caput SYS0-EVR0:Link-Clk-SP 100
@@ -256,12 +305,11 @@ SYS0-EVR0:Cnt-LinkTimo-I       2016-06-30 10:24:18.836612 23
 $ caput SYS0-EVR0:Link-Clk-SP 88.0525
 Old : SYS0-EVR0:Link-Clk-SP          100
 New : SYS0-EVR0:Link-Clk-SP          88.0525
-\end{verbatim}
+\end{lstlisting}
 
-
-\section{Test 2 - monitoring event reception on the EVR}
+\subsection{Test 2 - monitoring event reception on the EVR}
 For this test a line needs to be added to the startup script:
-\begin{verbatim}
+\begin{lstlisting}
 dbLoadRecords("evr-softEvent.template", "EVR=$(EVR), SYS=$(SYS), EVT=14,
         CODE=14")
 
@@ -272,20 +320,18 @@ SYS0-EVR0:Event-14-Cnt-I       2016-06-30 13:55:36.151467 134
 SYS0-EVR0:Event-14-Cnt-I       2016-06-30 13:55:36.222895 135
 SYS0-EVR0:Event-14-Cnt-I       2016-06-30 13:55:36.294324 136
 ^C
-\end{verbatim}
+\end{lstlisting}
 
 
-\section{Test 3 - reacting to events by producing digital triggers}
+\subsection{Test 3 - reacting to events by producing digital triggers}
 For this test two lines need to be added to the startup script:
-\begin{verbatim}
-dbLoadRecords("evr-pulserMap.template", "EVR=$(EVR), SYS=$(SYS),
-        PID=0, F=Trig, ID=0, EVT=14")
-dbLoadRecords("evr-pulserMap.template", "EVR=$(EVR), SYS=$(SYS),
-        PID=1, F=Trig, ID=0, EVT=14")
-\end{verbatim}
+\begin{lstlisting}
+dbLoadRecords("evr-pulserMap.template", "EVR=$(EVR), SYS=$(SYS), PID=0, F=Trig, ID=0, EVT=14")
+dbLoadRecords("evr-pulserMap.template", "EVR=$(EVR), SYS=$(SYS), PID=1, F=Trig, ID=0, EVT=14")
+\end{lstlisting}
 
 PCIe-EVR universal output 0 and 1 are connected to channels 1 and 2 of the oscilloscope and:
-\begin{verbatim}
+\begin{lstlisting}
 $ caput SYS0-EVR0:FrontUnivOut0-Src-SP 0
 Old : SYS0-EVR0:FrontUnivOut0-Src-SP 63
 New : SYS0-EVR0:FrontUnivOut0-Src-SP 0
@@ -295,7 +341,7 @@ New : SYS0-EVR0:Pul0-Evt-Trig0-SP    14
 $ caput SYS0-EVR0:Pul0-Width-SP     10000
 Old : SYS0-EVR0:Pul0-Width-SP        0
 New : SYS0-EVR0:Pul0-Width-SP        10000
-\end{verbatim}
+\end{lstlisting}
 
 The oscilloscope shows the signal shown in figure \ref{fig:14Hz}.
 \begin{figure}[!ht]
@@ -305,11 +351,11 @@ The oscilloscope shows the signal shown in figure \ref{fig:14Hz}.
   \label{fig:14Hz}
 \end{figure}
 
-\begin{verbatim}
+\begin{lstlisting}
 $ caput SYS0-EVR0:Pul0-Width-SP     50000
 Old : SYS0-EVR0:Pul0-Width-SP        10000
 New : SYS0-EVR0:Pul0-Width-SP        50000
-\end{verbatim}
+\end{lstlisting}
 
 The oscilloscope shows the signal shown in figure \ref{fig:50ms}.
 \begin{figure}[!ht]
@@ -319,25 +365,25 @@ The oscilloscope shows the signal shown in figure \ref{fig:50ms}.
   \label{fig:50ms}
 \end{figure}
 
-\begin{verbatim}
+\begin{lstlisting}
 $ caput SYS0-EVR0:Pul0-Width-SP     40000
 Old : SYS0-EVR0:Pul0-Width-SP        50000
 New : SYS0-EVR0:Pul0-Width-SP        40000
 $ caput SYS0-EVR0:Pul0-Width-SP     80000
 Old : SYS0-EVR0:Pul0-Width-SP        40000
 New : SYS0-EVR0:Pul0-Width-SP        80000
-\end{verbatim}
+\end{lstlisting}
 
 Produces in another terminal:
-\begin{verbatim}
+\begin{lstlisting}
 $ camonitor SYS0-EVR0:Pul0-Width-RB
 SYS0-EVR0:Pul0-Width-RB        2016-07-01 16:05:10.512348 50000
 SYS0-EVR0:Pul0-Width-RB        2016-07-01 16:07:25.632305 40000
 SYS0-EVR0:Pul0-Width-RB        2016-07-01 16:08:10.190883 80000
-\end{verbatim}
+\end{lstlisting}
 
 The delay tuning is also checked:
-\begin{verbatim}
+\begin{lstlisting}
 $ caput SYS0-EVR0:Pul0-Width-SP     20000
 Old : SYS0-EVR0:Pul0-Width-SP        80000
 New : SYS0-EVR0:Pul0-Width-SP        20000
@@ -353,23 +399,20 @@ New : SYS0-EVR0:Pul1-Width-SP        20000
 $ caput SYS0-EVR0:Pul1-Delay-SP     30000
 Old : SYS0-EVR0:Pul1-Delay-SP        0
 New : SYS0-EVR0:Pul1-Delay-SP        30000
-\end{verbatim}
+\end{lstlisting}
 
 The oscilloscope shows figure \ref{fig:delay}.
 \begin{figure}[!ht]
   \centering
     \includegraphics[width=0.8\textwidth]{./pictures/img_1982.eps}
-  \caption{14 Hz signal with delay}
+  \caption{Two 14 Hz signals with 30 ms delay}
   \label{fig:delay}
 \end{figure}
 
 Finally all other outputs are checked in the same way.
 
 
-%Run {\tt make attach} to embed the article's source code into its PDF file.
-%They can be extracted either with Acrobat Reader or with {\tt pdftk article.pdf unpack\_files output /tmp}.
-
-\end{document}
+\section{Conclusions}
 
 
 

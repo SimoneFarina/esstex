@@ -159,7 +159,7 @@
 \def\essdocrev#1{\def\@essdocrev{#1}}
 \def\essdocstate#1{\def\@essdocstate{#1}}
 \def\essdocclass#1{\def\@essdocclass{#1}}
-
+\def\subtitle#1{\def\@subtitle{#1}}
 
 %% ESS Specified Title Page
 
@@ -190,6 +190,7 @@
   \rule[0.5ex]{\linewidth}{2pt}\vspace*{-\baselineskip}\vspace*{3.2pt}
   \rule[0.5ex]{\linewidth}{1pt}\\[\baselineskip]
        {\Large \textbf{\@title}}\\[4mm]
+       {\large \textsc{\@subtitle}}\\[4mm]
   \rule[0.5ex]{\linewidth}{1pt}\vspace*{-\baselineskip}\vspace{3.2pt}
   \rule[0.5ex]{\linewidth}{2pt}\\
   \vskip 8em%
