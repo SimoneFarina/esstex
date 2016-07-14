@@ -39,7 +39,7 @@
 %% Document Title
 %%
 \title{ICS Engineering Manual}
-\subtitle{for MRF PCIe-EVR-300DC}
+\subtitle{for MRF PCIe-EVR-300}
 %% Document Author(s), if more than one author,
 %% use \newline instead of \\ or \linebreak in order to seperate them
 \author{Javier Cereijo Garcia \newline Jeong Han Lee }
@@ -79,97 +79,122 @@ ICS at ESS uses the Micro Research Finland (MRF) Timing System{\footnote{\url{ht
 
   \item This document provides the specification of an EVR, and its configuration in cooperation with ESS EPICS Environment (EEE).
   \item This document attempts to maintain consistency with existing ESS Timing system hardware as far as possible. 
-  \item This document might be a part of the documentation system and maps to ICS Breakdown structure (WBS) in future. 
+  \item This document might be a part of the documentation system and maps to ICS Breakdown structure (WBS) in future.
+
 \end{itemize}
+
 
 \chapter{System Description}
 MRF Technical Refenrece \citep[see][p45]{MRFEVENTSYSTEMDC} explained Event Recievers and wrote :
-\blockquote{Event Receivers decode timing events and signals from an optical event stream transmitted by an Event Generator. Events and signals are received at predefined rate the event clock that is usually divided down from an accelerators main RF reference. The event receivers lock to the phase event clock of the Event Generator and are thus phase locked to the RF reference. Event Receivers convert event codes transmitted by an Event Generator to hardware outputs. They can also generate software interrupts and store the event codes with globally distributed timestamps into FIFO memory to be read by a CPU.}
+\blockquote{\textit{Event Receivers decode timing events and signals from an optical event stream transmitted by an Event Generator. Events and signals are received at predefined rate the event clock that is usually divided down from an accelerators main RF reference. The event receivers lock to the phase event clock of the Event Generator and are thus phase locked to the RF reference. Event Receivers convert event codes transmitted by an Event Generator to hardware outputs. They can also generate software interrupts and store the event codes with globally distributed timestamps into FIFO memory to be read by a CPU.}}
 ICS uses and will use the following different types of EVR :
 \begin{itemize}
 \item VME-EVR-230
 \item VME-EVR-230RF
 \item PMC-EVR-300
-\item mTCA-EVR-300DC
+\item mTCA-EVR-300
+\item PCIe-EVR-300
 \item PCIe-EVR-300DC
 \item VME-EVR-300
 \end{itemize}
-And this document covers only PCIe-EVR-300DC. 
+And this document covers only PCIe-EVR-300 or PCIe-EVR-300DC\footnote{Delay Compenstation (DC) functionality exists in its firmware, so we mix their name in this document in general.}.
+
+
 \section{PCIe-EVR-300DC}
+Figure~\ref{fig:pcie-evr300dc} shows the rough physical dimensions $104\times 79~\mathrm{mm}{}^2$ of the PCIe-EVR-300DC card, which  will replace the former PCIe-EVR-300. And its power dissipation is almost 10W, so one should check the maximum power of each PCIe slot where the card will be. And it is advisable to have some forced cooling method to keep the temperature of the card reasonable \citetext{priv. comm.}.
+
 \begin{figure}[!htb]
   \centering
-  \includegraphics[width=0.8\textwidth]{./pictures/pcie_evr_300dc.eps}
+  \includegraphics[width=0.90\textwidth]{./pictures/pcie_evr_300dc.eps}
   \caption{
-            MRF PCIe-EVR-300 with Delay Compensation Unit.
-          }
+    MRF PCIe-EVR-300 with Delay Compensation Unit.
+  }
   \label{fig:pcie-evr300dc}   
 \end{figure}
 
-\newpage
+
+The PCIe-EVR-300  has a SFP transceiver as an input from EVG and a micro-SCSI type connector as an output to subsystem, because of its small form factor \cite{MRFEVENTSYSTEMDC}. Thus, in order to send supported type of signals to a subsystem, the interface board IFB-300 is needed. The IFB-300 has eight Universal I/O slots, shown in Figure~\ref{fig:ifb-300}. With different type of MRF Universal I/O modules, each slot can be used as an unique trigger or event signal sources. \textbf{Note that the cable between the PCIe-EVR-300DC and IFB-300 should be connected, disconnected, or both only when powered down}. Please see the detail information in Reference \citep[][p54]{MRFEVENTSYSTEMDC}.
+  
+\begin{figure}[!htb]
+  \centering
+  \includegraphics{./pictures/ifb-300.eps}
+  \caption{
+    MRF Inferface Board IFB 300 Front Panel \cite{MRFEVENTSYSTEMDC}.
+  }
+  \label{fig:ifb-300}   
+\end{figure}
+
 \chapter{System Requirements}
-The PCIe-EVR-300 is an event receiver (EVR) for the MRF timing system. Its role is receiving and decoding the events emited by an event generator (EVG) through an optical cable and producing outputs based on those events.\\
-Due to the small size of the hardware, it only has a SFP module and a high density output connector to interface to an IFB-300, which has 16 universal outputs.\\
-The PCIe-EVR-300 is used in EPICS using the mrfioc2 \cite{MRFIOC2} driver.\\
 
-This document explains the process followed for testing the PCIe-EVR-300; it starts by describing the hardware list and setup for the tests and the test environment, followed by the startup configuration, the test goals, the tests done and their outputs. Finally a summary and conclusions are presented.
+\section{Hardware List}
+The Hardware information is  summarized in Table~\ref{table:hwlist}. 
 
+\begin{table}[!htb]
+  \centering
+  \begin{tabular}{l|l|l}
+    \toprule
+    Device & Info  & Serial Number \\
+    \toprule
+    MRF PCIe-EVR-300      & ICS TAG-146   & K114029\\\midrule
+    Kontron Industrial PC & ics-essiip-01 & \\\midrule
+    MRF IFB-300           & ICS TAG-336   & K472056  \\\midrule
+    MRF cPCI-EVG-230      & ICS TAG-26    & E283016  \\\midrule
+    MRF cPCI-FOUT-12      & ICS TAG-27    & H385013 \\\midrule
+    Optical cables        &               & \\\midrule
+    LEMO cable            &               & \\\midrule
+    LEMO to BNC adaptor   &               & \\\midrule
+  \end{tabular}
+  \caption[]{Hardware List }
+  \label{table:hwlist}
+\end{table}
 
-
-\chapter{Test bench description}
-\section{Hardware list and specification}
-The hardware used for testing the PCIe-EVR-300 is:
-\begin{itemize}
-\item MRF PCIe-EVR-300
-	\begin{itemize}
-	\item TAG-146
-	\item Serial number K114029
-	\end{itemize}
-\item PC with free PCIe slot
-	\begin{itemize}
-	\item Kontron iPC in ESSIIP Control Rack in ICS lab (ics-essiip-01)
-	\end{itemize}
-\item MRF IFB-300 output module and cable
-	\begin{itemize}
-	\item TAG-336
-	\item Serial number K472056
-	\end{itemize}
-\item MRF EVG
-	\begin{itemize}
-	\item cPCI-EVG-230
-	\item TAG-26
-	\item Serial number E283016
-	\end{itemize}
-\item MRF Fan-out
-	\begin{itemize}
-	\item cPCI-FOUT-12
-	\item TAG-27
-	\item Serial number H385013 
-	\end{itemize}
-\item Optical cables
-\item Oscilloscope
-\item LEMO cable and LEMO to BNC adaptor
-\end{itemize}
-
-
-\section{Hardware setup}
-The phisical setup of the hardware is shown in figure \ref{fig:diagram}.
+Figure~\ref{fig:diagram} shows the physical hardware setup. And Figure~\ref{fig:hw-setup} shows the PCIe-MRF-300 and the IFB-300 setup in the lab. 
 \begin{figure}[!ht]
   \centering
     \includegraphics[width=0.8\textwidth]{./pictures/pcie_network.eps}
-  \caption{Hardware setup}
+  \caption{Hardware setup diagram}
   \label{fig:diagram}
 \end{figure}
+\begin{figure}[!htb]
+  \centering
+  \includegraphics{./pictures/hw-setup.eps}
+  \caption{
+    Hardware Setup.
+  }
+  \label{fig:hw-setup}   
+\end{figure}
+\section{Software List}
+The Software and Firmware information are summarized in Table~\ref{table:swlist}. 
+\begin{table}[!hb]
+  \centering
+  \begin{tabular}{l|l}
+    \toprule
+    Device & Info \\    \toprule
+    CentOS Linux          & 7.1.1503                                     \\\midrule
+    Kernel                & 3.10.0-229.7.2.rt56.141.6.el7.centos.x86\_64  \\\midrule
+    EEE \& EPICS Base     & 1.8.0  \& 3.14.12.5                           \\\midrule
+    mrfioc2               & 3.0.0                                         \\\midrule
+    EVR FPGA Firmware Version Register & 0x17000008 \\\midrule
+    EVR                   &  0x\textbf{1}7000008  \\\midrule
+    Form Factor           &  0x1\textbf{7}000008  \\\midrule
+    EVR Firmware ID       &  0x1700\textbf{00}08  \\\midrule
+    EVR Revision ID       &  0x170000\textbf{08} \\\midrule
+  \end{tabular}
+  \caption[]{Software List. Please see the detail information of EVR FPGA Firmware Version Register in Reference \citep[][p66]{MRFEVENTSYSTEMDC}}
+  \label{table:swlist}
+\end{table}
+
+\clearpage
+\newpage
+
+
+\chapter{Test bench description}
+
+
 
 
 \section{Test environment description}
-\begin{itemize}
-\item OS: CentOS Linux release 7.1.1503 (Core)
-\item Kernel release: 3.10.0-229.7.2.rt56.141.6.el7.centos.x86\textunderscore 64
-\item EEE version 1.8.0
-\item EPICS base 3.14.12.5
-\item mrfioc2 version 3.0.0
-\item EVR FPGA FW version 0x17000008
-\end{itemize}
+
 
 
 \section{PCI information}
