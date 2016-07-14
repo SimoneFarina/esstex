@@ -2,15 +2,16 @@
   , a4paper
   , article
   , oneside
-%  , twoside
-%  , draft
+  %  , twoside
+  , showtrims
 ]{memoir}
 
 \usepackage{essdocs}
 \usepackage[numbers]{natbib}
+\usepackage[autostyle]{csquotes}
 
 \begin{document}
-
+\frontmatter
 %% ESS Document Description
 %%
 \essdocdesc{Engineering Manual}
@@ -25,11 +26,11 @@
 
 %% ESS Document Revision Number
 %%
-\essdocrev{0.9}
+\essdocrev{0.1}
 
 %% ESS Document State
 %%
-\essdocstate{Draft}
+\essdocstate{Early Draft}
 
 %% ESS Document Classification
 %%
@@ -37,8 +38,8 @@
 
 %% Document Title
 %%
-\title{ESS ICS Engineering Manual}
-\subtitle{for MRF PCIe-EVR-300}
+\title{ICS Engineering Manual}
+\subtitle{for MRF PCIe-EVR-300DC}
 %% Document Author(s), if more than one author,
 %% use \newline instead of \\ or \linebreak in order to seperate them
 \author{Javier Cereijo Garcia \newline Jeong Han Lee }
@@ -55,24 +56,57 @@
 %% use \newline instead of \\ or \linebreak in order to seperate them
 \approver{ICS}
 
+\showtrimson
 
 \esstitle
 \newpage
 \tableofcontents
 \newpage
 
+\mainmatter
 
-\begin{abstract}
-This document explains the process followed for testing the PCIe-EVR-300 by Micro-Research Finland (MRF) at ESS using the EEE. This document can be used to test new equipment at in-kind partners facilities or as step-by-step instructions to set up a basic EVR.
-\end{abstract}
+%% \begin{abstract}
+%% This document explains the process followed for testing the PCIe-EVR-300 by Micro-Research Finland (MRF) at ESS using the EEE. This document can be used to test new equipment at in-kind partners facilities or as step-by-step instructions to set up a basic EVR.
+%% \end{abstract}
 
 
 %%% Actual Document Start at below
+\chapter{Overview}
+ICS at ESS uses the Micro Research Finland (MRF) Timing System{\footnote{\url{http://www.mrf.fi/}}} as its timing system of the ESS site. The consistent and up-to-date engineering manual is essential for the ESS Timing system. 
 
-\chapter{TEST}
+\begin{itemize}
+  \item This document identifies one of the MRF Timing Event Receivers (EVR) that needs to be configured for an ESS subsystem that needs synchronous frequencies, trigger signals and sequences of events \cite{MRFEVENTSYSTEMDC}. 
 
+  \item This document provides the specification of an EVR, and its configuration in cooperation with ESS EPICS Environment (EEE).
+  \item This document attempts to maintain consistency with existing ESS Timing system hardware as far as possible. 
+  \item This document might be a part of the documentation system and maps to ICS Breakdown structure (WBS) in future. 
+\end{itemize}
 
-\section{Introduction}
+\chapter{System Description}
+MRF Technical Refenrece \citep[see][p45]{MRFEVENTSYSTEMDC} explained Event Recievers and wrote :
+\blockquote{Event Receivers decode timing events and signals from an optical event stream transmitted by an Event Generator. Events and signals are received at predefined rate the event clock that is usually divided down from an accelerators main RF reference. The event receivers lock to the phase event clock of the Event Generator and are thus phase locked to the RF reference. Event Receivers convert event codes transmitted by an Event Generator to hardware outputs. They can also generate software interrupts and store the event codes with globally distributed timestamps into FIFO memory to be read by a CPU.}
+ICS uses and will use the following different types of EVR :
+\begin{itemize}
+\item VME-EVR-230
+\item VME-EVR-230RF
+\item PMC-EVR-300
+\item mTCA-EVR-300DC
+\item PCIe-EVR-300DC
+\item VME-EVR-300
+\end{itemize}
+And this document covers only PCIe-EVR-300DC. 
+\section{PCIe-EVR-300DC}
+\begin{figure}[!htb]
+  \centering
+  \includegraphics[width=0.8\textwidth]{./pictures/pcie_evr_300dc.eps}
+  \caption{
+            MRF PCIe-EVR-300 with Delay Compensation Unit.
+          }
+  \label{fig:pcie-evr300dc}   
+\end{figure}
+
+\newpage
+\chapter{System Requirements}
 The PCIe-EVR-300 is an event receiver (EVR) for the MRF timing system. Its role is receiving and decoding the events emited by an event generator (EVG) through an optical cable and producing outputs based on those events.\\
 Due to the small size of the hardware, it only has a SFP module and a high density output connector to interface to an IFB-300, which has 16 universal outputs.\\
 The PCIe-EVR-300 is used in EPICS using the mrfioc2 \cite{MRFIOC2} driver.\\
@@ -80,8 +114,9 @@ The PCIe-EVR-300 is used in EPICS using the mrfioc2 \cite{MRFIOC2} driver.\\
 This document explains the process followed for testing the PCIe-EVR-300; it starts by describing the hardware list and setup for the tests and the test environment, followed by the startup configuration, the test goals, the tests done and their outputs. Finally a summary and conclusions are presented.
 
 
-\section{Test bench description}
-\subsection{Hardware list and specification}
+
+\chapter{Test bench description}
+\section{Hardware list and specification}
 The hardware used for testing the PCIe-EVR-300 is:
 \begin{itemize}
 \item MRF PCIe-EVR-300
@@ -116,7 +151,7 @@ The hardware used for testing the PCIe-EVR-300 is:
 \end{itemize}
 
 
-\subsection{Hardware setup}
+\section{Hardware setup}
 The phisical setup of the hardware is shown in figure \ref{fig:diagram}.
 \begin{figure}[!ht]
   \centering
@@ -126,7 +161,7 @@ The phisical setup of the hardware is shown in figure \ref{fig:diagram}.
 \end{figure}
 
 
-\subsection{Test environment description}
+\section{Test environment description}
 \begin{itemize}
 \item OS: CentOS Linux release 7.1.1503 (Core)
 \item Kernel release: 3.10.0-229.7.2.rt56.141.6.el7.centos.x86\textunderscore 64
@@ -137,7 +172,7 @@ The phisical setup of the hardware is shown in figure \ref{fig:diagram}.
 \end{itemize}
 
 
-\subsection{PCI information}
+\section{PCI information}
 The output of \verb|lspci| for the PCIe-EVR-300 is:
 \begin{lstlisting}
 $ lspci -s 05:00 -vv
@@ -173,7 +208,7 @@ Matched 1 devices
 \end{lstlisting}
 
 
-\subsection{Startup configuration}
+\section{Startup configuration}
 The database used is evr-pcie-300.db and can be founf in the EEE in \newline
 \texttt{/opt/epics/modules/mrfioc2/3.0.0/db/evr-pcie-300.db}.
 
@@ -260,12 +295,12 @@ Starting iocInit
 \end{lstlisting}
 
 
-\section{PCIe-EVR-300 testing}
+\chapter{PCIe-EVR-300 testing}
 ****************************************\\
 The tests will have three parts: in the first one, the link between the EVG and the EVR is checked, and we check that the EVR is capable of synchronizing its frequency to the EVG; in the second test we check that the EVR is capable of receiving and acknowledging events; and finally we test the outputs.\\
 ****************************************\\
 
-\subsection{Test 1 - checking the EVR-EVG link and setting event clock and link frequency}
+\section{Test 1 - checking the EVR-EVG link and setting event clock and link frequency}
 \begin{lstlisting}
 $ caget SYS0-EVR0:Link-Sts
 SYS0-EVR0:Link-Sts             OK
@@ -323,7 +358,7 @@ SYS0-EVR0:Event-14-Cnt-I       2016-06-30 13:55:36.294324 136
 \end{lstlisting}
 
 
-\subsection{Test 3 - reacting to events by producing digital triggers}
+\section{Test 3 - reacting to events by producing digital triggers}
 For this test two lines need to be added to the startup script:
 \begin{lstlisting}
 dbLoadRecords("evr-pulserMap.template", "EVR=$(EVR), SYS=$(SYS), PID=0, F=Trig, ID=0, EVT=14")
@@ -412,7 +447,7 @@ The oscilloscope shows figure \ref{fig:delay}.
 Finally all other outputs are checked in the same way.
 
 
-\section{Conclusions}
+\chapter{Conclusions}
 
 
 
@@ -1566,6 +1601,7 @@ Finally all other outputs are checked in the same way.
 %% \end{itemize}
 
 \clearpage
+\backmatter
 %\bibliographystyle{unsrt}
 %\bibliographystyle{plainnat}
 %\bibliographystyle{abbrvnat}
