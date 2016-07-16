@@ -83,7 +83,7 @@ At European Spallation Source (ESS), Integrated Control System (ICS) does use th
 \textbf{Note that this is a very early draft document and might be updated as development progresses.}
 
 \section{Target Audience}
-This document is targeted to ICS engineers and technical stakeholders of the ESS timing system. It is assumed that the target audience has a technical background in a MRF Timing System and in EPICS development.
+This document is targeted to ICS engineers and technical stakeholders of the ESS timing system. It is assumed that the target audience has a technical background in the MRF Timing System, the EPICS development, and a Linux environment.
 
 \chapter{System Description}
 MRF Technical Reference \citep[see][p45]{MRFEVENTSYSTEMDC} explained Event Receivers and wrote :
@@ -220,7 +220,7 @@ Figure~\ref{fig:diagram} and Figure~\ref{fig:hw-setup} shows the glimpse of what
          
 \subsection{Kernel Module}
 It is essential to load the mrf kernel module and to check its information as follows:
-\begin{lstlisting}
+\begin{lstlisting}[style=termstyle]
 root@ics-essiip-01:~# modprobe mrf
   
 root@ics-essiip-01:~# modinfo mrf
@@ -242,7 +242,7 @@ It is mandatory to check the access permission of an IOC user for the device fil
 Each PCI device is identified by a domain, a bus, a device, and a function number in Linux. Therefore, in order to initialize the MRF PCIe-EVR-300 board in EEE, one need the following information: a domain number, a bus number, a device number, and a function number. These numbers are the parameters of a \texttt{mrmEvrSetupPCI} function.
 
 One can use \texttt{lspci} to find them as follows:
-\begin{lstlisting}
+\begin{lstlisting}[style=termstyle]
   root@ics-essiip-01:~# lspci
   05:00.0 Signal processing controller: Lattice Semiconductor Corporation Device ec30 (rev 01)
 
@@ -276,7 +276,7 @@ One can use \texttt{lspci} to find them as follows:
 \end{lstlisting}
 
 And one should identify four number as follows:
-\begin{lstlisting}
+\begin{lstlisting}[style=termstyle]
   root@ics-essiip-01:~# lspci -s 05:00 -t
   -+-[0000:05]---00.0
   \-[0000:00]-
@@ -295,96 +295,148 @@ And one should identify four number as follows:
 \end{table}
 
 
+\clearpage
 \section{EPICS IOC Setup under EEE}
-The database used is evr-pcie-300.db and can be founf in the EEE in \newline
-\texttt{/opt/epics/modules/mrfioc2/3.0.0/db/evr-pcie-300.db}.
-
-The cPCI EVG is set to send event 14 at 14 Hz with an event clock frequency of 88.0525 MHz.
-Since this frequency is different to the default in \texttt{evr-pcie-300.db}, the file is copied to the current folder and the link clock frequency is set to 88.0525 MHz (line 111): \texttt{field( VAL , "\$(Link-Clk-SP=88.0525,undefined)")}
-
-Startup script:
-\begin{lstlisting}
-epicsEnvSet("SYS"             "SYS0")
-epicsEnvSet("EVR"             "EVR0")
-epicsEnvSet("EVR_PCIDOMAIN"   "0")
-epicsEnvSet("EVR_PCIBUS"      "0x5")
-epicsEnvSet("EVR_PCIDEVICE"   "0x0")
-epicsEnvSet("EVR_PCIFUNCTION" "0")
-
-require mrfioc2
-
-mrmEvrSetupPCI($(EVR), $(EVR_PCIDOMAIN), $(EVR_PCIBUS), $(EVR_PCIDEVICE), $(EVR_PCIFUNCTION))
-
-dbLoadRecords("./evr-pcie-300.db", "EVR=$(EVR), SYS=$(SYS)")
+In this section, one should consider in order to start the EPICS IOC for the MRF PCIe-EVR-300 under EEE: 1) the EPICS database file, and 2) the EPICS start-up script. All files are located in a directory, where an user can create, e.g., in the ICS Lab, 
+\begin{lstlisting}[style=termstyle, label={list:pwd}, caption={Working Directory in the ICS lab.} ]
+  /home/javiercereijogarcia/PCIe-EVR-300_tests
 \end{lstlisting}
 
-
-
- Then the output should look like:
-\begin{lstlisting}
-$ iocsh test1.cmd 
-/opt/epics/bases/base-3.14.12.5/bin/centos7-x86_64/softIoc -D
-       /opt/epics/bases/base-3.14.12.5/dbd/softIoc.dbd /tmp/iocsh.startup.14439
-#date="Wed  6 Jul 13:38:40 UTC 2016"
-#user="javiercereijogarcia"
-#PWD="/home/javiercereijogarcia/PCIe-EVR-300_tests"
-#EPICSVERSION="3.14.12.5"
-#EPICS_HOST_ARCH="centos7-x86_64"
-#SHELLBOX=""
-#EPICS_CA_ADDR_LIST=""
-#EPICS_MODULE_INCLUDE_PATH=".:/usr/lib64:/usr/lib:/lib64:/lib"
-dlload         /opt/epics/modules/environment/1.8.0/3.14.12.5/lib/centos7-x86_64/libenvironment.so
-dbLoadDatabase /opt/epics/modules/environment/1.8.0/3.14.12.5/dbd/environment.dbd
-environment_registerRecordDeviceDriver
-< "test1.cmd"
-epicsEnvSet("SYS"             "SYS0")
-epicsEnvSet("EVR"             "EVR0")
-epicsEnvSet("EVR_PCIDOMAIN"   "0")
-epicsEnvSet("EVR_PCIBUS"      "0x5")
-epicsEnvSet("EVR_PCIDEVICE"   "0x0")
-epicsEnvSet("EVR_PCIFUNCTION" "0")
-require mrfioc2
-require: mrfioc2 depends on devlib2 (2.6+).
-require: Loading library /opt/epics/modules/devlib2/2.6.0/3.14.12.5/lib/centos7-x86_64/libdevlib2.so.
-require: Loading /opt/epics/modules/devlib2/2.6.0/3.14.12.5/dbd/devlib2.dbd.
-require: Calling devlib2_registerRecordDeviceDriver function.
-require: Loading library /opt/epics/modules/mrfioc2/3.0.0/3.14.12.5/lib/centos7-x86_64/libmrfioc2.so.
-require: Adding /opt/epics/modules/mrfioc2/3.0.0/db.
-require: Adding /opt/epics/modules/mrfioc2/3.0.0/startup.
-require: Loading /opt/epics/modules/mrfioc2/3.0.0/3.14.12.5/dbd/mrfioc2.dbd.
-require: Calling mrfioc2_registerRecordDeviceDriver function.
- 
-mrmEvrSetupPCI(EVR0, 0, 0x5, 0x0, 0)
-Device EVR0  5:0.0
-Using IRQ 16
-Setting magic LE number!
-EC 30: Enabling interrupts
-FWVersion 0x17000008
-Found version 8
-Found EVR0:SFP0 EEPROM
-PCIe: Out FP:0 FPUNIV:16 RB:0 IFP:0 GPIO:0
-EVR FIFO task start
-dbLoadRecords("./evr-pcie-300.db", "EVR=EVR0, SYS=SYS0")
-iocInit
-Starting iocInit
-############################################################################
-## EPICS R3.14.12.5-2015-08 $Date: Tue 2015-03-24 09:57:35 -0500$
-## EPICS Base built Oct  9 2015
-############################################################################
+\subsection{EPICS Database File}
+One could use the existent database file in the EEE as a template for the EPICS IOC, the file is located in the following location : 
+\begin{lstlisting}[style=termstyle]
+  /opt/epics/modules/mrfioc2/3.0.0/db/evr-pcie-300.db
 \end{lstlisting}
 
+In the ICS Lab, the event clock frequency of the event generator (EVG) is set to 88.0525 MHz and the EVG sends the event number 14, at 14 Hz to the EVR. The link clock frequency in the database file of the EVR should be matched to the EVG event clock frequency. Thus, one should change the hardcode of \texttt{Link-Clk-SP} from the existent line \ref{oldlinkclockfreq} to  the modified line \ref{newlinkclockfreq} in Listing~\ref{list:record}. The link clock frequency of EVR should be matched to the event clock frequency of EVG
+\begin{lstlisting}[style=termstylenumber, label={list:record}, caption={The record has the link clock frequency.}] 
+  record(ao, "$(SYS,recursive)-$(EVR,recursive):Link-Clk-SP")
+  {
+    field(DTYP, "Obj Prop double")
+    field( OUT, "@OBJ=$(EVR,recursive), PROP=Clock")
+    field(PINI, "YES")
+    field(DESC, "Event Link speed")
+-   field( VAL, "$(Link-Clk-SP=124.916(*@\label{oldlinkclockfreq}@*), undefined)")}
++   field( VAL, "$(Link-Clk-SP=88.0532(*@\label{newlinkclockfreq}@*), undefined)")}
+    field(EGU , "MHz")
+    field(LINR, "LINEAR")
+    field(ESLO, "1e-6")
+    field(HOPR, "150")
+    field(LOPR, "50")
+    field(DRVH, "150")
+    field(DRVL, "50")
+    field(PREC, "3")
+    field(FLNK, "$(SYS,recursive)-$(EVR,recursive):Link-Clk-I")
+    info(autosaveFields_pass0, "VAL EGU ESLO HOPR LOPR DRVH DRVL PREC")
+  }
+\end{lstlisting}
+Note that one can change this Process Variable \texttt{Link-Clk-SP} when the IOC is started also. 
 
-The PCI information available from EPICS is:
 
+\subsection{Start-Up Script}
+Listing~\ref{list:st.cmd} shows the start-up script of the EPICS IOC, the MRF PCIe-EVR-300 Identification Numbers, shown in Table~\ref{table:pciidnumber}, are used in the script. And the script is located in the directory in Listing~\ref{list:pwd}. 
+
+
+\begin{lstlisting}[
+    style=termstylenumber,
+    label={list:st.cmd},
+    caption={Start-up script \texttt{evr300\_0.cmd}. Line \ref{pciid0}-\ref{pciid3} should be matched to Table~\ref{table:pciidnumber}. The EPICS Database file path should be checked in Line \ref{dbpwd}.}
+  ]
+  epicsEnvSet("SYS"             "SYS0")
+  epicsEnvSet("EVR"             "EVR0")
+  epicsEnvSet("EVR_PCIDOMAIN"   "0x0") (*@\label{pciid0}@*)
+  epicsEnvSet("EVR_PCIBUS"      "0x5") (*@\label{pciid1}@*)
+  epicsEnvSet("EVR_PCIDEVICE"   "0x0") (*@\label{pciid2}@*)
+  epicsEnvSet("EVR_PCIFUNCTION" "0x0") (*@\label{pciid3}@*)
+  
+  require mrfioc2
+  
+  mrmEvrSetupPCI($(EVR), $(EVR_PCIDOMAIN), $(EVR_PCIBUS), $(EVR_PCIDEVICE), $(EVR_PCIFUNCTION))
+  
+  dbLoadRecords("./evr-pcie-300.db", "EVR=$(EVR), SYS=$(SYS)") (*@\label{dbpwd}@*)
+\end{lstlisting}
+
+\subsection{EPICS IOC}
+Under EEE, the EPICS IOC can be started via the command \texttt{iocsh evr300\_0.cmd}. The output should look like as follows:
+
+\begin{lstlisting}[style=termstyle]
+  [javiercereijogarcia@ics-essiip-01 PCIe-EVR-300_tests]$ iocsh evr300_0.cmd 
+  /opt/epics/bases/base-3.14.12.5/bin/centos7-x86_64/softIoc -D /opt/epics/bases/base-3.14.12.5/dbd/softIoc.dbd /tmp/iocsh.startup.20268
+  #date="Fri 15 Jul 15:55:53 UTC 2016"
+  #user="javiercereijogarcia"
+  #PWD="/home/javiercereijogarcia/PCIe-EVR-300_tests"
+  #EPICSVERSION="3.14.12.5"
+  #EPICS_HOST_ARCH="centos7-x86_64"
+  #SHELLBOX=""
+  #EPICS_CA_ADDR_LIST=""
+  #EPICS_MODULE_INCLUDE_PATH=".:/usr/lib64:/usr/lib:/lib64:/lib"
+  dlload         /opt/epics/modules/environment/1.8.0/3.14.12.5/lib/centos7-x86_64/libenvironment.so
+  dbLoadDatabase /opt/epics/modules/environment/1.8.0/3.14.12.5/dbd/environment.dbd
+  environment_registerRecordDeviceDriver
+  < "evr300_0.cmd"
+  epicsEnvSet("SYS"             "SYS0")
+  epicsEnvSet("EVR"             "EVR0")
+  epicsEnvSet("EVR_PCIDOMAIN"   "0x0")
+  epicsEnvSet("EVR_PCIBUS"      "0x5")
+  epicsEnvSet("EVR_PCIDEVICE"   "0x0")
+  epicsEnvSet("EVR_PCIFUNCTION" "0x0")
+  require mrfioc2
+  require: mrfioc2 depends on devlib2 (2.6+).
+  require: Loading library /opt/epics/modules/devlib2/2.6.0/3.14.12.5/lib/centos7-x86_64/libdevlib2.so.
+  require: Loading /opt/epics/modules/devlib2/2.6.0/3.14.12.5/dbd/devlib2.dbd.
+  require: Calling devlib2_registerRecordDeviceDriver function.
+  require: Loading library /opt/epics/modules/mrfioc2/3.0.0/3.14.12.5/lib/centos7-x86_64/libmrfioc2.so.
+  require: Adding /opt/epics/modules/mrfioc2/3.0.0/db.
+  require: Adding /opt/epics/modules/mrfioc2/3.0.0/startup.
+  require: Loading /opt/epics/modules/mrfioc2/3.0.0/3.14.12.5/dbd/mrfioc2.dbd.
+  require: Calling mrfioc2_registerRecordDeviceDriver function.
+  
+  mrmEvrSetupPCI(EVR0, 0x0, 0x5, 0x0, 0x0)
+  Device EVR0  5:0.0
+  Using IRQ 16
+  Setting magic LE number!
+  EC 30: Enabling interrupts
+  FWVersion 0x17000008
+  Found version 8
+  Found EVR0:SFP0 EEPROM
+  PCIe: Out FP:0 FPUNIV:16 RB:0 IFP:0 GPIO:0
+  EVR FIFO task start
+  dbLoadRecords("./evr-pcie-300.db", "EVR=EVR0, SYS=SYS0")
+  iocInit
+  Starting iocInit
+  ############################################################################
+  ## EPICS R3.14.12.5-2015-08 $Date: Tue 2015-03-24 09:57:35 -0500$
+  ## EPICS Base built Oct  9 2015
+  ############################################################################
+  Set EVR clock 88052500.000000
+  cas warning: Configured TCP port was unavailable.
+  cas warning: Using dynamically assigned TCP port 48729,
+  cas warning: but now two or more servers share the same UDP port.
+  cas warning: Depending on your IP kernel this server may not be
+  cas warning: reachable with UDP unicast (a host's IP in EPICS_CA_ADDR_LIST)
+  iocRun: All initialization complete
+  epicsEnvSet IOCSH_PS1,"ics-essiip-01> "
+  ics-essiip-01>
+\end{lstlisting}
+One could check the entire environment setting in the output also. In addition, the PCI information available within this EPICS IOC through \texttt{devPCIShow} command as follows:
 \begin{lstlisting}
-ics-essiip-01> devPCIShow 9 0x1204
-PCI 0000:05:00.0 IRQ 16
-  vendor:device 1204:ec30 rev 00
-  subved:subdev 1a3e:172c
-  class 118000 generic signal processing controller
-  driver mrf-pci
-  BAR 0 32-bit MMIO      1 MB
-Matched 1 devices
+  ics-essiip-01> devPCIShow
+  Look for the line with your configuration information, in our case is:
+  PCI 0000:05:00.0 IRQ 16
+    vendor:device 1204:ec30 rev 00
+  Where the vendor id 1204 is Lattice.
+  And show the PCI information with (the second parameter is the verbosity level):
+
+  ics-essiip-01> devPCIShow 9 0x1204
+  PCI 0000:05:00.0 IRQ 16
+    vendor:device 1204:ec30 rev 00
+    subved:subdev 1a3e:172c
+    class 118000 generic signal processing controller
+    driver mrf-pci
+    BAR 0 32-bit MMIO      1 MB
+    Matched 1 devices
+
+  ics-essiip-01>
 \end{lstlisting}
 
 \newpage
@@ -410,7 +462,7 @@ The tests will have three parts: in the first one, the link between the EVG and 
 
 \section{Step 1}
 checking the EVR-EVG link and setting event clock and link frequency
-\begin{lstlisting}
+\begin{lstlisting}[style=termstyle]
 \$ caget SYS0-EVR0:Link-Sts
 SYS0-EVR0:Link-Sts             OK
   
@@ -454,7 +506,7 @@ New : SYS0-EVR0:Link-Clk-SP          88.0525
 \section{Step 2}
 - monitoring event reception on the EVR
 For this test a line needs to be added to the startup script:
-\begin{lstlisting}
+\begin{lstlisting}[style=termstyle]
 dbLoadRecords("evr-softEvent.template", "EVR=$(EVR), SYS=$(SYS), EVT=14,
         CODE=14")
 
@@ -497,7 +549,7 @@ The oscilloscope shows the signal shown in figure \ref{fig:14Hz}.
   \label{fig:14Hz}
 \end{figure}
 
-\begin{lstlisting}
+\begin{lstlisting}[style=termstyle]
 $ caput SYS0-EVR0:Pul0-Width-SP     50000
 Old : SYS0-EVR0:Pul0-Width-SP        10000
 New : SYS0-EVR0:Pul0-Width-SP        50000
@@ -511,7 +563,7 @@ The oscilloscope shows the signal shown in figure \ref{fig:50ms}.
   \label{fig:50ms}
 \end{figure}
 
-\begin{lstlisting}
+\begin{lstlisting}[style=termstyle]
 $ caput SYS0-EVR0:Pul0-Width-SP     40000
 Old : SYS0-EVR0:Pul0-Width-SP        50000
 New : SYS0-EVR0:Pul0-Width-SP        40000
@@ -529,7 +581,7 @@ SYS0-EVR0:Pul0-Width-RB        2016-07-01 16:08:10.190883 80000
 \end{lstlisting}
 
 The delay tuning is also checked:
-\begin{lstlisting}
+\begin{lstlisting}[style=termstyle]
 $ caput SYS0-EVR0:Pul0-Width-SP     20000
 Old : SYS0-EVR0:Pul0-Width-SP        80000
 New : SYS0-EVR0:Pul0-Width-SP        20000
