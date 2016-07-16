@@ -11,8 +11,10 @@
 \usepackage[numbers]{natbib}
 \usepackage[autostyle]{csquotes}
 
+\setsecnumdepth{subsection}
+
 \begin{document}
-\frontmatter
+%\frontmatter
 %% ESS Document Description
 %%
 \essdocdesc{Engineering Manual}
@@ -64,11 +66,7 @@
 \tableofcontents
 \newpage
 
-\mainmatter
-
-%% \begin{abstract}
-%% This document explains the process followed for testing the PCIe-EVR-300 by Micro-Research Finland (MRF) at ESS using the EEE. This document can be used to test new equipment at in-kind partners facilities or as step-by-step instructions to set up a basic EVR.
-%% \end{abstract}
+%\mainmatter
 
 
 %%% Actual Document Start at below
@@ -85,7 +83,7 @@ At European Spallation Source (ESS), Integrated Control System (ICS) does use th
 \textbf{Note that this is a very early draft document and might be updated as development progresses.}
 
 \section{Target Audience}
-This document is targeted to ICS engineers and technical stakeholders. It is assumed that the target audience has a technical background in a MRF Timing System and in EPICS development.
+This document is targeted to ICS engineers and technical stakeholders of the ESS timing system. It is assumed that the target audience has a technical background in a MRF Timing System and in EPICS development.
 
 \chapter{System Description}
 MRF Technical Reference \citep[see][p45]{MRFEVENTSYSTEMDC} explained Event Receivers and wrote :
@@ -118,8 +116,6 @@ Figure~\ref{fig:pcie-evr300dc} shows the rough physical dimensions $104\times 79
 
 The PCIe-EVR-300  has a SFP transceiver as an input from EVG and a micro-SCSI type connector as an output to subsystem, because of its small form factor \cite{MRFEVENTSYSTEMDC}. Thus, in order to send supported type of signals to a subsystem, the interface board IFB-300 is needed. The IFB-300 has eight Universal I/O slots, shown in Figure~\ref{fig:ifb-300}. With different type of MRF Universal I/O modules, each slot can be used as an unique trigger or event signal sources.
 
-\textbf{Note that the cable between the PCIe-EVR-300DC and IFB-300 should be connected, disconnected, or both only when powered down}. Please see the detail information in Reference \citep[][p54]{MRFEVENTSYSTEMDC}.
-  
 \begin{figure}[!htb]
   \centering
   \includegraphics{./pictures/ifb-300.eps}
@@ -130,34 +126,35 @@ The PCIe-EVR-300  has a SFP transceiver as an input from EVG and a micro-SCSI ty
 \end{figure}
 
 
-
-\chapter{System Environment}
-Before describing the engineering procedure in order to integrate the MRF PCIe-EVR-300 board, it is mandatory to have proper system environment that consists of specific hardware and software lists. Here we will show the hardware and software lists, their block diagrams, and their setup in the ICS lab at ESS.
-
 \clearpage
 
-\section{Hardware List}
-Table~\ref{table:hwlist} shows the hardware information. \texttt{TAG} is the prefix of the ICS internal inventory system. 
-\begin{table}[!htb]
+\chapter{System Environment}
+Before describing the engineering procedure in order to integrate the MRF PCIe-EVR-300 board, it is mandatory to have proper system environment that consists of specific hardware and software lists. Here we will show the hardware and software lists, their block diagrams, and their setup in the ICS lab at ESS. The information shown in this chapter is used in the ICS Lab at ESS.
+
+
+\section{Hardware}
+Table~\ref{table:hwlist} shows the hardware list and its environment. The form factor and version of EVG can be changeable. It is assumed that the proper working EVG system is ready. Here, \texttt{TAG} is used as the prefix of the ICS internal inventory system in order to track it down. One can use only EVG without FOUT. Kontron Industrial PC can be able to replace with PC, workstation, or server with a compatible PCIe slot, workstation, or server. Note that this PCIe slot for the MRF PCIe-EVR-300 should support more than 10W.
+\begin{table}[!hb]
   \centering
   \begin{tabular}{l|l|l}
     \toprule
-    Device                    & Info                   & Serial Number \\
-    \toprule
+    Hardware                  & Info                   & Serial Number \\
+    \midrule
     MRF PCIe-EVR-300          & \texttt{ICS TAG-146}   & K114029\\\midrule
-    Kontron Industrial PC     & ics-essiip-01          & \\\midrule
+    Kontron Industrial PC     & Hostname : ics-essiip-01          & \\\midrule
     MRF IFB-300               & \texttt{ICS TAG-336}   & K472056  \\\midrule
     Universal I/O             &                        &          \\\midrule
     MRF cPCI-EVG-230          & \texttt{ICS TAG-26}    & E283016  \\\midrule
     MRF cPCI-FOUT-12          & \texttt{ICS TAG-27}    & H385013 \\\midrule
-    Optical cables            &               & \\\midrule
-    LEMO cables               &               & \\\midrule
-    LEMO to BNC Adapters      &               & \\\midrule
-    Oscilloscope              &               & \\\bottomrule
+    Optical cables            & LC, Optical 850 nm     & \\\midrule
+    LEMO cables               &                        & \\\midrule
+    LEMO to BNC Adapters      &                        & \\\midrule
+    Oscilloscope              &                        & \\\bottomrule
   \end{tabular}
-  \caption[]{Hardware List. One can use only EVG without FOUT. And the form factor and version of EVG can be changeable. PC can also changeable, but the PCIe slot of a PC should support more than 10W.}
+  \caption[]{Hardware List and Its Environment.}
   \label{table:hwlist}
 \end{table}
+
 
 Figure~\ref{fig:diagram} shows the physical hardware setup and Figure~\ref{fig:hw-setup} shows the PCIe-MRF-300 and the IFB-300 setup in the lab. 
 \begin{figure}[!t]
@@ -175,58 +172,127 @@ Figure~\ref{fig:diagram} shows the physical hardware setup and Figure~\ref{fig:h
 
 
 \clearpage
-\section{Software List}
-Table~\ref{table:swlist} shows the Software and Firmware information.
-
+\section{Software}
+Table~\ref{table:swlist} shows the Software list and its environment. It is mandatory to check the kernel version, and the mrf kernel module version. Since the mrfioc2 is dependent upon devlibs EEE internally, an end-user is unnecessary to check its version explicitly. 
 \begin{table}[!htb]
   \centering
   \begin{tabular}{l|l}
     \toprule
-    Device & Info \\    \toprule
-    CentOS Linux          & \texttt{7.1.1503}                                   \\\midrule
-    Kernel                & 3.10.0-229.7.2.rt56.141.6.el7.centos.x86\_64        \\\midrule
-    EEE \& EPICS Base     & \texttt{1.8.0}  \& \texttt{3.14.12.5}               \\\midrule
-    mrfioc2               & EEE module ver. 3.0.0                               \\\midrule
-    EVR FPGA Firmware Version Register & \texttt{0x17000008}                    \\\midrule
-    Board Type - EVR      &  \texttt{0x}\underline{\textbf{1}}\texttt{7000008}  \\\midrule
-    Form Factor - PCIe    &  \texttt{0x1}\underline{\textbf{7}}\texttt{000008}  \\\midrule
-    EVR Firmware ID - 300 &  \texttt{0x1700}\underline{\textbf{00}}\texttt{08}  \\\midrule
-    EVR Revision ID       &  \texttt{0x170000}\underline{\textbf{08}}           \\\bottomrule
+    Item               & Version Info.                                   \\\midrule
+    CentOS Linux       & \texttt{7.1.1503}                               \\\midrule
+    Kernel             & \texttt{3.10.0-229.7.2.rt56.141.6.el7.centos.x86\_64}    \\\midrule
+    mrf kernel module  & version : \texttt{1} / srcversion \texttt{124F2C1F3D5E2080AE1B755}     \\\midrule
+    EEE                & \texttt{1.8.0}                                  \\\midrule
+    EPICS Base         & \texttt{3.14.12.5}                              \\\midrule
+    mrfioc2            & EEE module ver. \texttt{3.0.0}                  \\\midrule
+    devlib2            & EEE module ver. \texttt{2.6+}                   \\\bottomrule
   \end{tabular}
-  \caption[]{Software List. Please see the detailed information of the EVR FPGA Firmware Version Register in Reference \citep[][p66]{MRFEVENTSYSTEMDC}}
+  \caption[]{Software and its version information.}
   \label{table:swlist}
 \end{table}
 
+\section{EVR Firmware}
+Table~\ref{table:fwinfo} shows EVR FPGA Firmware Version Register. Note that the EVR Revision ID of the MRF PCIe-EVR-300 in the ICS Lab is not in Reference \cite{MRFEVENTSYSTEMDC}.
 
+\begin{table}[!htb]
+  \centering
+  \begin{tabular}{r|c|l}
+    \toprule
+    EVR FPGA Firmware Version Register & \multicolumn{2}{c}{\texttt{0x17000008}} \\\midrule
+    Board Type  & EVR      &  \texttt{0x}\underline{\textbf{1}}\texttt{7000008}  \\\midrule
+    Form Factor & PCIe     &  \texttt{0x1}\underline{\textbf{7}}\texttt{000008}  \\\midrule
+    EVR Firmware ID & 300  &  \texttt{0x1700}\underline{\textbf{00}}\texttt{08}  \\\midrule
+    EVR Revision ID & $-$  &  \texttt{0x170000}\underline{\textbf{08}}           \\\bottomrule
+  \end{tabular}
+  \caption[]{The EVR FPGA Firmware Version Register in Reference \citep[see][p66]{MRFEVENTSYSTEMDC}}
+  \label{table:fwinfo}
+\end{table}
+
+
+\clearpage
 \chapter{Engineering Procedure}
+This chapter provides the minimal information to configure the EVR board properly. And it will be updated as development progresses. 
 
-\section{PCIe EVR-300 Board Installation}
-
+\section{System Installation}
+Figure~\ref{fig:diagram} and Figure~\ref{fig:hw-setup} shows the glimpse of what system might be like in a Lab. \textbf{Note that the cable between the PCIe-EVR-300DC and IFB-300 should be connected, disconnected, or both only when powered down}. Please see the detail information in Reference \citep[][p54]{MRFEVENTSYSTEMDC}.
+  
 \section{PCIe EVR-300 Board Identification}
-
-MRF kernel module loaded with: \texttt{\$modprobe mrf}
-
-The output of \verb|lspci| for the PCIe-EVR-300 is:
+         
+\subsection{Kernel Module}
+It is essential to load the mrf kernel module and to check its information as follows:
 \begin{lstlisting}
-$ lspci -s 05:00 -vv
-05:00.0 Signal processing controller: Lattice Semiconductor Corporation Device
-        ec30 (rev 01)
-    Subsystem: Device 1a3e:172c
-    Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr-
-        Stepping- SERR- FastB2B- DisINTx-
-    Status: Cap+ 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort-
-        <MAbort- >SERR- <PERR- INTx-
-    Latency: 0, Cache Line Size: 64 bytes
-    Interrupt: pin A routed to IRQ 16
-    Region 0: Memory at c0400000 (32-bit, non-prefetchable) [size=1M]
-    Capabilities: <access denied>
-    Kernel driver in use: mrf-pci
-
-$ lspci -s 05:00 -t
--+-[0000:05]---00.0
- \-[0000:00]-
+root@ics-essiip-01:~# modprobe mrf
+  
+root@ics-essiip-01:~# modinfo mrf
+filename:       /lib/modules/3.10.0-229.7.2.rt56.141.6.el7.centos.x86_64/extra/mrf.ko
+author:         Michael Davidsaver <mdavidsaver@bnl.gov>
+version:        1
+license:        GPL v2
+rhelversion:    7.1
+srcversion:     124F2C1F3D5E2080AE1B755
+depends:        parport,uio
+vermagic:       3.10.0-229.7.2.rt56.141.6.el7.centos.x86_64 SMP preempt mod_unload modversions 
+parm:           cable:Name of JTAG parallel port cable to emulate (charp)
+parm:           interfaceversion:User space interface version (int)
 \end{lstlisting}
 
+It is mandatory to check the access permission of an IOC user for the device file, e.g., \texttt{/dev/uio0} to allow the IOC process to open it. In case ones target system is NOT running \texttt{UDEV}, please consult the EVG user guide~\cite{EVR-USER-GUIDE}. And for building and loading the EVR kernel module and for changing the device file permission, please see Reference~\citep[see][p12,13]{EVR-USER-GUIDE}. It is inadvisable to change the file permission by using \texttt{chmod}. 
+
+\subsection{PCI Addressing}
+Each PCI device is identified by a domain, a bus, a device, and a function number in Linux. Therefore, in order to initialize the MRF PCIe-EVR-300 board in EEE, one need the following information: a domain number, a bus number, a device number, and a function number. These numbers are the parameters of a \texttt{mrmEvrSetupPCI} function.
+
+One can use \texttt{lspci} to find them as follows:
+\begin{lstlisting}
+  root@ics-essiip-01:~# lspci
+  05:00.0 Signal processing controller: Lattice Semiconductor Corporation Device ec30 (rev 01)
+
+  root@ics-essiip-01:~# lspci -s 05:00 -vv
+  05:00.0 Signal processing controller: Lattice Semiconductor Corporation Device ec30 (rev 01)
+	Subsystem: Device 1a3e:172c
+	Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap+ 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 0, Cache Line Size: 64 bytes
+	Interrupt: pin A routed to IRQ 16
+	Region 0: Memory at c0400000 (32-bit, non-prefetchable) [size=1M]
+	Capabilities: [50] Power Management version 3
+		Flags: PMEClk- DSI- D1- D2- AuxCurrent=0mA PME(D0-,D1-,D2-,D3hot-,D3cold-)
+		Status: D0 NoSoftRst- PME-Enable- DSel=0 DScale=0 PME-
+	Capabilities: [70] MSI: Enable- Count=1/1 Maskable- 64bit+
+		Address: 0000000000000000  Data: 0000
+	Capabilities: [90] Express (v1) Endpoint, MSI 00
+		DevCap:	MaxPayload 128 bytes, PhantFunc 0, Latency L0s <64ns, L1 <1us
+			ExtTag- AttnBtn- AttnInd- PwrInd- RBE+ FLReset-
+		DevCtl:	Report errors: Correctable- Non-Fatal- Fatal- Unsupported-
+			RlxdOrd+ ExtTag- PhantFunc- AuxPwr- NoSnoop-
+			MaxPayload 128 bytes, MaxReadReq 512 bytes
+		DevSta:	CorrErr- UncorrErr- FatalErr- UnsuppReq- AuxPwr- TransPend-
+		LnkCap:	Port #0, Speed 2.5GT/s, Width x1, ASPM L0s, Exit Latency L0s unlimited, L1 <1us
+			ClockPM- Surprise- LLActRep- BwNot-
+		LnkCtl:	ASPM Disabled; RCB 64 bytes Disabled- CommClk+
+			ExtSynch- ClockPM- AutWidDis- BWInt- AutBWInt-
+		LnkSta:	Speed 2.5GT/s, Width x1, TrErr- Train- SlotClk+ DLActive- BWMgmt- ABWMgmt-
+	Capabilities: [100 v1] Vendor Specific Information: ID=0000 Rev=0 Len=00c <?>
+	Kernel driver in use: mrf-pci
+\end{lstlisting}
+
+And one should identify four number as follows:
+\begin{lstlisting}
+  root@ics-essiip-01:~# lspci -s 05:00 -t
+  -+-[0000:05]---00.0
+  \-[0000:00]-
+\end{lstlisting}
+, where \texttt{-+-[0000:05]---00.0} can be translated to \texttt{-+-}[domain:bus]\texttt{---}device.function. Thus in the above case, four numbers are shown in Table~\ref{table:pciidnumber}.\begin{table}[!htb]
+  \centering
+  \begin{tabular}{l|l}
+    \toprule
+    domain   & 0x0 \\\midrule
+    bus      & 0x5 \\\midrule
+    device   & 0x0 \\\midrule
+    function & 0x0 \\\bottomrule
+  \end{tabular}
+  \caption[]{MRF PCIe-EVR-300 Identification Numbers}
+  \label{table:pciidnumber}
+\end{table}
 
 
 \section{EPICS IOC Setup under EEE}
@@ -323,7 +389,7 @@ Matched 1 devices
 
 \newpage
 
-\chapter{System Deployment Checklist}
+\chapter{System In-Situ Verification Procedure}
 ****************************************\\
 The tests will have three parts: in the first one, the link between the EVG and the EVR is checked, and we check that the EVR is capable of synchronizing its frequency to the EVG; in the second test we check that the EVR is capable of receiving and acknowledging events; and finally we test the outputs.\\
 ****************************************\\
@@ -503,7 +569,33 @@ Using IRQ 16
 Can neither open resource file nor uio file of PCI device 0000:05:00.0 BAR 0
 PCI error: Failed to map BARs 0 for EC 30
 \end{lstlisting}
-The solution can be found in the "Timing System: User Manual - Troubleshooting" wiki page \cite{TSESSWIKI}.
+
+
+
+
+The output of \verb|lspci| for the PCIe-EVR-300 is:
+\begin{lstlisting}
+$ lspci -s 05:00 -vv
+05:00.0 Signal processing controller: Lattice Semiconductor Corporation Device
+        ec30 (rev 01)
+    Subsystem: Device 1a3e:172c
+    Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr-
+        Stepping- SERR- FastB2B- DisINTx-
+    Status: Cap+ 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort-
+        <MAbort- >SERR- <PERR- INTx-
+    Latency: 0, Cache Line Size: 64 bytes
+    Interrupt: pin A routed to IRQ 16
+    Region 0: Memory at c0400000 (32-bit, non-prefetchable) [size=1M]
+    Capabilities: <access denied>
+    Kernel driver in use: mrf-pci
+
+$ lspci -s 05:00 -t
+-+-[0000:05]---00.0
+ \-[0000:00]-
+\end{lstlisting}
+
+
+
 
 %% \chapter{Requirements}
 
