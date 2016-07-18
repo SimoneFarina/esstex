@@ -522,7 +522,7 @@ Short comments on each command or a series of commands are shown before the corr
 \end{lstlisting}
 
 \section{Step 2 : Monitor Receiving and acknowledging Events}
-For this step, an additional EVR database file is needed to add to the end line of the \path{evr300\_0.cmd} file. This additional database file is located in \path{/opt/epics/modules/mrfioc2/3.0.0/db} and no modification is needed. The new start-up script file, \path{evr300\_1.cmd} is shown in Listing~\ref{list:evr300-1.cmd}. Note that Line \ref{dbpwd2} show the current directory \path{./}. And Line \ref{dbsoftevtpwd} shows no path of the database file, because it can be detected automatically. 
+For this step, an additional EVR database file is needed to add to the end line of the \path{evr300_0.cmd} file. This additional database file is located in \path{/opt/epics/modules/mrfioc2/3.0.0/db} and no modification is needed. The new start-up script file, \path{evr300_1.cmd} is shown in Listing~\ref{list:evr300-1.cmd}. Note that Line \ref{dbpwd2} show the current directory \path{./}. And Line \ref{dbsoftevtpwd} shows no path of the database file, because it can be detected automatically. 
 \begin{lstlisting}[
     style=termstylenumber,
     label={list:evr300-1.cmd},
@@ -564,7 +564,7 @@ Short comments on each command or a series of commands are shown before the corr
 
 
 \section{Step 3 : Generate Trigger Signals from EVR}
-For this step, an additional EVR database file with two configrations is also needed to add to the end line of the \path{evr300\_1.cmd} file. This additional database file is located in \path{/opt/epics/modules/mrfioc2/3.0.0/db}, and no modification is needed. Thus, the new start-up script file, \path{evr300\_2.cmd} is shown in Listing~\ref{list:evr300-2.cmd}. Note that each path of database files should be checked correctly. 
+For this step, an additional EVR database file with two configrations is also needed to add to the end line of the \path{evr300_1.cmd} file. This additional database file is located in \path{/opt/epics/modules/mrfioc2/3.0.0/db}, and no modification is needed. Thus, the new start-up script file, \path{evr300_2.cmd} is shown in Listing~\ref{list:evr300-2.cmd}. Note that each path of database files should be checked correctly. 
 \begin{lstlisting}[ 
     style=termstylenumber,
     label={list:evr300-2.cmd},
