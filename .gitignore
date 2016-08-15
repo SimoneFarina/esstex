@@ -32,3 +32,4 @@ doc_*
 Makefile
 *.nav
 *.snm
+#*
