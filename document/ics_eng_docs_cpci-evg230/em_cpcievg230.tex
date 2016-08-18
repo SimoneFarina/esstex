@@ -75,9 +75,9 @@ At European Spallation Source (ESS), Integrated Control System (ICS) does use th
 
 \section{Scope}
 \begin{itemize}
-\item This document identifies one of the MRF Timing Event Receivers (EVR) that needs to be configured for an ESS subsystem that needs synchronous frequencies, trigger signals and sequences of events \cite{MRFEVENTSYSTEMDC}.
-\item This document provides the generic description of the MRF PCIe-EVR-300 and its interface board (IFB-300). In addition, it affords the minimal, essential, and generic information for the system configuration.  
-\item The purpose of this document is to describe the engineering procedure and troubleshooting about how the MRF PCIe-EVR-300 board will be integrated in cooperation with the ESS EPICS Environment (EEE).
+\item This document identifies one of the MRF Timing Event Generators (EVG) that needs to be configured for an ESS subsystem that needs synchronous frequencies, trigger signals and sequences of events \cite{MRFEVENTSYSTEMDC} \textcolor{magenta}{this ref needs to be changed in multiple places along the document}.
+\item This document provides the generic description of the MRF cPCI-EVG-230. In addition, it affords the minimal, essential, and generic information for the system configuration.  
+\item The purpose of this document is to describe the engineering procedure and troubleshooting about how the MRF cPCI-EVG-230 board will be integrated in cooperation with the ESS EPICS Environment (EEE).
 \item This document attempts to maintain consistency with existing ESS Timing system hardware as far as possible. 
 \end{itemize}
 \textbf{Note that this is a very early draft document and should be updated as development progresses.}
@@ -86,10 +86,15 @@ At European Spallation Source (ESS), Integrated Control System (ICS) does use th
 This document is targeted to ICS engineers and technical stakeholders of the ESS timing system. It is assumed that the target audience has a technical background in the MRF Timing System, the EPICS development, and a Linux environment.
 
 \chapter{System Description}
-MRF Technical Reference \citep[see][p45]{MRFEVENTSYSTEMDC} explained Event Receivers and wrote :
-\blockquote{\textit{Event Receivers decode timing events and signals from an optical event stream transmitted by an Event Generator. Events and signals are received at predefined rate the event clock that is usually divided down from an accelerators main RF reference. The event receivers lock to the phase event clock of the Event Generator and are thus phase locked to the RF reference. Event Receivers convert event codes transmitted by an Event Generator to hardware outputs. They can also generate software interrupts and store the event codes with globally distributed timestamps into FIFO memory to be read by a CPU.}}
+MRF Technical Reference \citep[see][p9]{MRFEVENTSYSTEMDC} explained Event Generators and wrote :
+\blockquote{\textit{The Event Generator is responsible of creating and sending out timing events to an array of Event Receivers.
+High configurability makes it feasible to build a whole timing system with a single Event Generator without external counters etc.
+Events are sent out by the event generator as event frames (words) which consist of an eight bit event code and an eight bit distributed bus data byte. The event transfer rate is derived from an external RF clock or optionally an on-board clock generator. The optical event stream transmitted by the Event Generator is phase locked to the clock reference.
+There are several sources of events: trigger events, sequence events, software events and events received from an upstream Event Generator. Events from different sources have different priority which is resolved in a priority encoder.
+In addition to events the Event Generator enables the distribution of eight simultaneous signals sampled with the event clock rate, the distributed bus. Distributed bus signals may be provided externally or generated on-board by programmable multiplexed counters.}}
+\textcolor{magenta}{this text is copied from ref:MRFEVENTSYSTEMDC, which is not applicable here (DC); afaik only the "events received from an upstream Event Generator" source of events is not applicable}
 
-ICS uses and will use the following different types of EVR :
+ICS uses and will use the following different types of EVG \textcolor{magenta}{update this list, maybe ask Han?}:
 \begin{itemize}
 \item VME-EVR-230 / 230RF
 \item PMC-EVR-230
@@ -98,15 +103,16 @@ ICS uses and will use the following different types of EVR :
 \item VME-EVR-300 / 300DC
 \end{itemize}
 
-And the scope of this document is to cover PCIe-EVR-300 board, PCIe-EVR-300DC\footnote{Delay Compensation (DC) Unit. Currently we only use the EVR-300 board in this document.} board, or both boards.
+And the scope of this document is to cover the cPCI-EVG-230 board.
 
 
-\section{PCIe-EVR-300DC}
-Figure~\ref{fig:pcie-evr300dc} shows the rough physical dimensions $104\times 79~\mathrm{mm}{}^2$ of the PCIe-EVR-300DC card, which  will replace the former PCIe-EVR-300. And its power dissipation is almost 10W, so one should check the maximum power of each PCIe slot where the card will be. And it is advisable to have some forced cooling method to keep the temperature of the card reasonable \citetext{priv. comm.}.
+\section{cPCI-EVG-230}
+Figure~\ref{fig:pcie-evr300dc} \textcolor{magenta}{update this figure and dimmensions} shows the rough physical dimensions $104\times 79~\mathrm{mm}{}^2$ of the cPCI-EVG-230 card..
 
+\textcolor{magenta}{change this figure}
 \begin{figure}[!htb]
   \centering
-  \includegraphics[width=0.99\textwidth]{./pictures/pcie_evr_300dc.eps}
+  \includegraphics[width=0.99\textwidth]{./pictures/mrf_cpci_evg230.eps}
   \caption{
     MRF PCIe-EVR-300 with Delay Compensation Unit.
   }
@@ -114,57 +120,42 @@ Figure~\ref{fig:pcie-evr300dc} shows the rough physical dimensions $104\times 79
 \end{figure}
 
 
-The PCIe-EVR-300  has a SFP transceiver as an input from EVG and a micro-SCSI type connector as an output to subsystem, because of its small form factor \cite{MRFEVENTSYSTEMDC}. Thus, in order to send supported type of signals to a subsystem, the interface board IFB-300 is needed. The IFB-300 has eight Universal I/O slots, shown in Figure~\ref{fig:ifb-300}. With different type of MRF Universal I/O modules, each slot can be used as an unique trigger or event signal source.
-
-\begin{figure}[!htb]
-  \centering
-  \includegraphics{./pictures/ifb-300.eps}
-  \caption{
-    MRF Interface Board IFB 300 Front Panel \cite{MRFEVENTSYSTEMDC}.
-  }
-  \label{fig:ifb-300}   
-\end{figure}
+The cPCI-EVG-230  has a SFP transceiver as an output to EVR/fan-out, one trigger input, one RF input and two universal I/O slots.
 
 
 \clearpage
 
 \chapter{System Environment}
-Before describing the engineering procedure for an EEE integration of the MRF PCIe-EVR-300 board, it is mandatory to have proper system environment that consists of specific hardware and software lists. Here we will show the hardware and software lists, their block diagrams, and their setup in the ICS lab at ESS. The information shown in this chapter is used in the ICS Lab at ESS.
+Before describing the engineering procedure for an EEE integration of the MRF cPCI-EVG-230 board, it is mandatory to have proper system environment that consists of specific hardware and software lists. Here we will show the hardware and software lists, their block diagrams, and their setup in the ICS lab at ESS. The information shown in this chapter is used in the ICS Lab at ESS.
 
 
 \section{Hardware}
-Table~\ref{table:hwlist} shows the hardware list and its environment. The form factor and version of EVG can be changeable. It is assumed that the proper working EVG system is ready. Here, \texttt{TAG} is used as the prefix of the ICS internal inventory system in order to track it down. One can use only EVG without FOUT. Kontron Industrial PC can be able to replace with PC, workstation, or server with a compatible PCIe slot. Note that this PCIe slot for the MRF PCIe-EVR-300 should support more than 10W.
+Table~\ref{table:hwlist} shows the hardware list and its environment. The form factor and version of EVR can be changeable. It is assumed that the proper working EVR is configured. Here, \texttt{TAG} is used as the prefix of the ICS internal inventory system in order to track it down.
 \begin{table}[!hb]
   \centering
   \begin{tabular}{l|l|l}
     \toprule
-    Hardware                  & Info                   & Serial Number \\\midrule
-    MRF PCIe-EVR-300          & \texttt{ICS TAG-146}   & K114029       \\\midrule
-    Kontron Industrial PC     & Hostname : ics-essiip-01&              \\\midrule
-    MRF IFB-300               & \texttt{ICS TAG-336}   & K472056       \\\midrule
-    Universal I/O             &                        &               \\\midrule
-    MRF cPCI-EVG-230          & \texttt{ICS TAG-26}    & E283016       \\\midrule
-    MRF cPCI-FOUT-12          & \texttt{ICS TAG-27}    & H385013       \\\midrule
-    Optical cables            & LC, Optical 850 nm     &               \\\midrule
-    LEMO cables               &                        &               \\\midrule
-    LEMO to BNC Adapters      &                        &               \\\midrule
-    Oscilloscope              &                        &               \\\bottomrule
+    Hardware                  & Info                        & Serial Number \\\midrule
+    MRF cPCI-EVG-230          & \texttt{ICS TAG-49}         & E283008       \\\midrule
+    cPCI crate                & \textcolor{magenta}{no info}&               \\\midrule
+    CPU                       & Hostname : ics-cpci2-cpu1   &               \\\midrule
+    Optical cables            & LC, Optical 850 nm          &               \\\bottomrule
   \end{tabular}
   \caption[]{Hardware List and Its Environment.}
   \label{table:hwlist}
 \end{table}
 
 
-Figure~\ref{fig:diagram} shows the physical hardware setup and Figure~\ref{fig:hw-setup} shows the PCIe-MRF-300 and the IFB-300 setup in the lab. 
-\begin{figure}[!t]
-  \centering
-    \includegraphics[width=0.7\textwidth]{./pictures/pcie_network.eps}
-  \caption{Hardware setup diagram}
-  \label{fig:diagram}
-\end{figure}
+Figure~\ref{fig:diagram} shows the physical hardware setup and Figure~\ref{fig:hw-setup} shows the PCIe-MRF-300 and the IFB-300 setup in the lab.\textcolor{magenta}{Change figures} 
+%% \begin{figure}[!t]
+%%   \centering
+%%     \includegraphics[width=0.7\textwidth]{./pictures/pcie_network.eps}
+%%   \caption{Hardware setup diagram}
+%%   \label{fig:diagram}
+%% \end{figure}
 \begin{figure}[!b]
   \centering
-  \includegraphics[width=0.8\textwidth]{./pictures/hw-setup.eps}
+  \includegraphics[width=0.8\textwidth]{./pictures/evgoncrate.eps}
   \caption{Hardware Setup in the ICS lab.}
   \label{fig:hw-setup}   
 \end{figure}
@@ -180,7 +171,7 @@ Table~\ref{table:swlist} shows the Software list and its environment. It is mand
     Item               & Version Info.                                            \\\midrule
     CentOS Linux       & \texttt{7.1.1503}                                        \\\midrule
     Kernel             & \texttt{3.10.0-229.7.2.rt56.141.6.el7.centos.x86\_64}    \\\midrule
-    mrf kernel module  & version : \texttt{1} / srcversion \texttt{124F2C1F3D5E2080AE1B755}     \\\midrule
+    mrf kernel module  & version : \texttt{1} / srcversion \texttt{124F2C1F3D5E2080AE1B755}   \textcolor{magenta}{not sure about this}  \\\midrule
     EEE                & \texttt{1.8.0}                                  \\\midrule
     EPICS Base         & \texttt{3.14.12.5}                              \\\midrule
     mrfioc2            & EEE module ver. \texttt{3.0.0}                  \\\midrule
@@ -191,39 +182,39 @@ Table~\ref{table:swlist} shows the Software list and its environment. It is mand
 \end{table}
 
 \section{EVR Firmware}
-Table~\ref{table:fwinfo} shows EVR FPGA Firmware Version Register.
+Table~\ref{table:fwinfo} shows EVG FPGA Firmware Version Register.\textcolor{magenta}{only EVG FPGA Firmware Version Register is the actual one, change the rest}
 %Note that the EVR Revision ID of the MRF PCIe-EVR-300 in the ICS Lab is not in Reference \cite{MRFEVENTSYSTEMDC}.
 
 \begin{table}[!htb]
   \centering
   \begin{tabular}{p{0.3\linewidth}|c|l}
     \toprule
-    EVR FPGA Firmware Version Register            & \multicolumn{2}{c}{\texttt{0x17000008}}             \\\midrule
+    EVG FPGA Firmware Version Register            & \multicolumn{2}{c}{\texttt{0x20000005}}             \\\midrule
     Board Type      & EVR                         &  \texttt{0x}\underline{\textbf{1}}\texttt{7000008}  \\\midrule
     Form Factor     & PCIe                        &  \texttt{0x1}\underline{\textbf{7}}\texttt{000008}  \\\midrule
     EVR Firmware ID & Modular Register Map (MRM)  &  \texttt{0x1700}\underline{\textbf{00}}\texttt{08}  \\\midrule
     EVR Revision ID & 8                           &  \texttt{0x170000}\underline{\textbf{08}}           \\\bottomrule
   \end{tabular}
-  \caption[]{EVR FPGA Firmware Version Register in Reference \citep[see][p66]{MRFEVENTSYSTEMDC}. The EVR in the ICS Lab does not have the Delay Compensation firmware, but the Modular Register Map firmware.}
+  \caption[]{EVR FPGA Firmware Version Register in Reference \citep[see][p66]{MRFEVENTSYSTEMDC}. The EVR in the ICS Lab does not have the Delay Compensation firmware, but the Modular Register Map firmware. \textcolor{magenta}{change this accordingly}}
   \label{table:fwinfo}
 \end{table}
 
 
 \clearpage
 \chapter{Engineering Procedure}
-This chapter provides the minimal information to configure the EVR board properly. 
+This chapter provides the minimal information to configure the EVG board properly. 
 
 \section{System Installation}
-Figure~\ref{fig:diagram} and Figure~\ref{fig:hw-setup} shows the glimpse of what system might be like in a Lab. \textbf{Note that the cable between the PCIe-EVR-300DC and IFB-300 should be connected, disconnected, or both only when powered down}. Please see the detail information in Reference \citep[][p54]{MRFEVENTSYSTEMDC}.
+Figure~\ref{fig:diagram} and Figure~\ref{fig:hw-setup} \textcolor{magenta}{change both} shows the glimpse of what system might be like in a Lab. \textbf{Note that the cable between the PCIe-EVR-300DC and IFB-300 should be connected, disconnected, or both only when powered down}. Please see the detail information in Reference \citep[][p54]{MRFEVENTSYSTEMDC}.
   
-\section{PCIe EVR-300 Board Identification}
+\section{cPCI-EVG-230 Board Identification}
          
 \subsection{Kernel Module}
 It is essential to load the mrf kernel module and to check its information as follows:
 \begin{lstlisting}[style=termstyle]
-root@ics-essiip-01:~# modprobe mrf
-  
-root@ics-essiip-01:~# modinfo mrf
+[root@ics-cpci2-cpu1 tests_cPCI-EVG-230]# modprobe mrf
+
+[root@ics-cpci2-cpu1 tests_cPCI-EVG-230]# modinfo mrf
 filename:       /lib/modules/3.10.0-229.7.2.rt56.141.6.el7.centos.x86_64/extra/mrf.ko
 author:         Michael Davidsaver <mdavidsaver@bnl.gov>
 version:        1
@@ -239,102 +230,65 @@ parm:           interfaceversion:User space interface version (int)
 It is mandatory to check the access permission of an IOC user for the device file, e.g., \path{/dev/uio0} to allow the IOC process to open it. In case ones target system is NOT running \texttt{UDEV}, please consult the EVG user guide~\cite{EVR-USER-GUIDE}. And for building and loading the EVR kernel module and for changing the device file permission, please see Reference~\citep[see][p12,13]{EVR-USER-GUIDE}. It is inadvisable to change the file permission by using \texttt{chmod}. 
 
 \subsection{PCI Addressing}
-Each PCI device is identified by a domain, a bus, a device, and a function number in Linux. Therefore, in order to initialize the MRF PCIe-EVR-300 board in EEE, one needs the following information: a domain number, a bus number, a device number, and a function number. These numbers are the parameters of a \texttt{mrmEvrSetupPCI} function.
+Each PCI device is identified by a domain, a bus, a device, and a function number in Linux. Therefore, in order to initialize the MRF cPCI-EVG-230 board in EEE, one needs the following information: a bus number, a device number, and a function number. These numbers are the parameters of a \texttt{mrmEvgSetupPCI} function.
 
 One can use \texttt{lspci} to find them as follows:
 \begin{lstlisting}[style=termstyle]
-  root@ics-essiip-01:~# lspci
-  05:00.0 Signal processing controller: Lattice Semiconductor Corporation Device ec30 (rev 01)
+[root@ics-cpci2-cpu1 tests_cPCI-EVG-230]# lspci
+10:0c.0 Signal processing controller: PLX Technology, Inc. PCI9030 32-bit 33MHz PCI <-> IOBus Bridge (rev 01)
 
-  root@ics-essiip-01:~# lspci -s 05:00 -vv
-  05:00.0 Signal processing controller: Lattice Semiconductor Corporation Device ec30 (rev 01)
-	Subsystem: Device 1a3e:172c
-	Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
-	Status: Cap+ 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
-	Latency: 0, Cache Line Size: 64 bytes
+10:0c.0 Signal processing controller: PLX Technology, Inc. PCI9030 32-bit 33MHz PCI <-> IOBus Bridge (rev 01)
+	Subsystem: Device 1a3e:20e6
+	Control: I/O+ Mem+ BusMaster- SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR+ FastB2B- DisINTx-
+	Status: Cap+ 66MHz- UDF- FastB2B+ ParErr- DEVSEL=medium >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
 	Interrupt: pin A routed to IRQ 16
-	Region 0: Memory at c0400000 (32-bit, non-prefetchable) [size=1M]
-	Capabilities: [50] Power Management version 3
-		Flags: PMEClk- DSI- D1- D2- AuxCurrent=0mA PME(D0-,D1-,D2-,D3hot-,D3cold-)
+	Region 0: Memory at f0910000 (32-bit, non-prefetchable) [size=128]
+	Region 2: Memory at f0900000 (32-bit, non-prefetchable) [size=64K]
+	Capabilities: [40] Power Management version 1
+		Flags: PMEClk- DSI- D1- D2- AuxCurrent=0mA PME(D0+,D1-,D2-,D3hot+,D3cold-)
 		Status: D0 NoSoftRst- PME-Enable- DSel=0 DScale=0 PME-
-	Capabilities: [70] MSI: Enable- Count=1/1 Maskable- 64bit+
-		Address: 0000000000000000  Data: 0000
-	Capabilities: [90] Express (v1) Endpoint, MSI 00
-		DevCap:	MaxPayload 128 bytes, PhantFunc 0, Latency L0s <64ns, L1 <1us
-			ExtTag- AttnBtn- AttnInd- PwrInd- RBE+ FLReset-
-		DevCtl:	Report errors: Correctable- Non-Fatal- Fatal- Unsupported-
-			RlxdOrd+ ExtTag- PhantFunc- AuxPwr- NoSnoop-
-			MaxPayload 128 bytes, MaxReadReq 512 bytes
-		DevSta:	CorrErr- UncorrErr- FatalErr- UnsuppReq- AuxPwr- TransPend-
-		LnkCap:	Port #0, Speed 2.5GT/s, Width x1, ASPM L0s, Exit Latency L0s unlimited, L1 <1us
-			ClockPM- Surprise- LLActRep- BwNot-
-		LnkCtl:	ASPM Disabled; RCB 64 bytes Disabled- CommClk+
-			ExtSynch- ClockPM- AutWidDis- BWInt- AutBWInt-
-		LnkSta:	Speed 2.5GT/s, Width x1, TrErr- Train- SlotClk+ DLActive- BWMgmt- ABWMgmt-
-	Capabilities: [100 v1] Vendor Specific Information: ID=0000 Rev=0 Len=00c <?>
+	Capabilities: [48] CompactPCI hot-swap <?>
+	Capabilities: [4c] Vital Product Data
+		Unknown large resource type 35, will not decode more.
 	Kernel driver in use: mrf-pci
+
 \end{lstlisting}
 
 And one should identify four number as follows:
 \begin{lstlisting}[style=termstyle]
-  root@ics-essiip-01:~# lspci -s 05:00 -t
-  -+-[0000:05]---00.0
-  \-[0000:00]-
+[root@ics-cpci2-cpu1 tests_cPCI-EVG-230]# lspci -s 10:0c -t
+-+-[0000:10]---0c.0
+ \-[0000:00]-
 \end{lstlisting}
-, where \texttt{-+-[0000:05]---00.0} can be translated to \texttt{-+-}[domain:bus]\texttt{---}device.function. Thus in the above case, four numbers are shown in Table~\ref{table:pciidnumber}.\begin{table}[!htb]
+, where \texttt{-+-[0000:10]---0c.0} can be translated to \texttt{-+-}[domain:bus]\texttt{---}device.function. Thus in the above case, three numbers are shown in Table~\ref{table:pciidnumber}.\begin{table}[!htb]
   \centering
   \begin{tabular}{l|l}
     \toprule
-    domain   & 0x0 \\\midrule
-    bus      & 0x5 \\\midrule
-    device   & 0x0 \\\midrule
+    bus      & 0x10 \\\midrule
+    device   & 0x0c \\\midrule
     function & 0x0 \\\bottomrule
   \end{tabular}
-  \caption[]{MRF PCIe-EVR-300 Identification Numbers}
+  \caption[]{MRF cPCI-EVG-230 Identification Numbers}
   \label{table:pciidnumber}
 \end{table}
 
 
 \clearpage
 \section{EPICS IOC Setup under EEE}
-In this section, in order to start the EPICS IOC for the MRF PCIe-EVR-300 under EEE, one should consider the following things: 1) the EPICS database file, and 2) the EPICS start-up script. All files are located in a directory, where an user can create, e.g., in the ICS Lab, 
+In this section, in order to start the EPICS IOC for the MRF cPCI-EVG-230 under EEE, one should consider the following things: 1) the EPICS database file, and 2) the EPICS start-up script. All files are located in a directory, where an user can create, e.g., in the ICS Lab, 
 \begin{lstlisting}[style=termstyle, label={list:pwd}, caption={Working Directory in the ICS lab.} ]
-  /home/javiercereijogarcia/PCIe-EVR-300_tests
+  /home/javiercereijogarcia/tests_cPCI-EVG-230
 \end{lstlisting}
 
 \subsection{EPICS Database File}
 One could use the existent database file in the EEE as a template for the EPICS IOC, the file is located in the following location : 
 \begin{lstlisting}[style=termstyle]
-  /opt/epics/modules/mrfioc2/3.0.0/db/evr-pcie-300.db
+  /opt/epics/modules/mrfioc2/3.0.0/db/evg-cpci.db
 \end{lstlisting}
-
-In the ICS Lab, the event clock frequency of the event generator (EVG) is set to 88.0525 MHz and the EVG sends the event number 14, at 14 Hz to the EVR. The link clock frequency in the database file of the EVR should be matched to the EVG event clock frequency. Thus, one should change the hardcode of \texttt{Link-Clk-SP} from the existent line \ref{oldlinkclockfreq} to  the modified line \ref{newlinkclockfreq} in Listing~\ref{list:record}. 
-\begin{lstlisting}[style=termstylenumber, label={list:record}, caption={The record has the link clock frequency.}] 
-  record(ao, "$(SYS,recursive)-$(EVR,recursive):Link-Clk-SP")
-  {
-    field(DTYP, "Obj Prop double")
-    field( OUT, "@OBJ=$(EVR,recursive), PROP=Clock")
-    field(PINI, "YES")
-    field(DESC, "Event Link speed")
--   field( VAL, "$(Link-Clk-SP=124.916(*@\label{oldlinkclockfreq}@*), undefined)")}
-+   field( VAL, "$(Link-Clk-SP=88.0525(*@\label{newlinkclockfreq}@*), undefined)")}
-    field(EGU , "MHz")
-    field(LINR, "LINEAR")
-    field(ESLO, "1e-6")
-    field(HOPR, "150")
-    field(LOPR, "50")
-    field(DRVH, "150")
-    field(DRVL, "50")
-    field(PREC, "3")
-    field(FLNK, "$(SYS,recursive)-$(EVR,recursive):Link-Clk-I")
-    info(autosaveFields_pass0, "VAL EGU ESLO HOPR LOPR DRVH DRVL PREC")
-  }
-\end{lstlisting}
-Note that one can also change this Process Variable \texttt{Link-Clk-SP} when the IOC is started. 
 
 
 \subsection{Start-Up Script}
-Listing~\ref{list:st.cmd} shows the IOC start-up script which has the MRF PCIe-EVR-300 Identification Numbers, shown in Table~\ref{table:pciidnumber}. Note that the start-up script is located in the directory in Listing~\ref{list:pwd}. Moreover, the database file, \texttt{evr-pcie-300.db}, path must be in the current directory (\path{./}) in Line \ref{dbpwd}.
+Listing~\ref{list:st.cmd} shows the IOC start-up script which has the MRF PCIe-EVR-300 Identification Numbers, shown in Table~\ref{table:pciidnumber}. Note that the start-up script is located in the directory in Listing~\ref{list:pwd}.
 
 
 \begin{lstlisting}[
@@ -342,109 +296,105 @@ Listing~\ref{list:st.cmd} shows the IOC start-up script which has the MRF PCIe-E
     label={list:st.cmd},
     caption={Start-up script \texttt{evr300\_0.cmd}. Line \ref{pciid0}-\ref{pciid3} should be matched to Table~\ref{table:pciidnumber}. }
   ]
-  epicsEnvSet("SYS"             "SYS0")
-  epicsEnvSet("EVR"             "EVR0")
-  epicsEnvSet("EVR_PCIDOMAIN"   "0x0") (*@\label{pciid0}@*)
-  epicsEnvSet("EVR_PCIBUS"      "0x5") (*@\label{pciid1}@*)
-  epicsEnvSet("EVR_PCIDEVICE"   "0x0") (*@\label{pciid2}@*)
-  epicsEnvSet("EVR_PCIFUNCTION" "0x0") (*@\label{pciid3}@*)
-  
-  require mrfioc2
-  
-  mrmEvrSetupPCI($(EVR), $(EVR_PCIDOMAIN), $(EVR_PCIBUS), $(EVR_PCIDEVICE), $(EVR_PCIFUNCTION))
-  
-  dbLoadRecords("./evr-pcie-300.db", "EVR=$(EVR), SYS=$(SYS)") (*@\label{dbpwd}@*)
+
+epicsEnvSet("SYS"             "testcPCI-EVG-230")
+epicsEnvSet("EVG"             "EVG0")
+epicsEnvSet("EVG_PCIBUS"      "0x10") (*@\label{pciid0}@*)
+epicsEnvSet("EVG_PCIDEVICE"   "0x0c") (*@\label{pciid1}@*)
+epicsEnvSet("EVG_PCIFUNCTION" "0x0") (*@\label{pciid2}@*)
+
+require mrfioc2
+
+mrmEvgSetupPCI($(EVG), $(EVG_PCIBUS), $(EVG_PCIDEVICE), $(EVG_PCIFUNCTION))
+
+dbLoadRecords("evg-cpci.db", "EVG=$(EVG), SYS=$(SYS)")
   
 \end{lstlisting}
 
 \subsection{EPICS IOC}
-Under EEE, the EPICS IOC can be started via the command \texttt{iocsh evr300\_0.cmd}. The output should look like as follows:
+Under EEE, the EPICS IOC can be started via the command \texttt{iocsh cPCI-evg-230\_0.cmd}. The output should look like as follows:
 
 \begin{lstlisting}[style=termstyle]
-  [javiercereijogarcia@ics-essiip-01 PCIe-EVR-300_tests]$ iocsh evr300_0.cmd 
-  /opt/epics/bases/base-3.14.12.5/bin/centos7-x86_64/softIoc -D /opt/epics/bases/base-3.14.12.5/dbd/softIoc.dbd /tmp/iocsh.startup.20268
-  #date="Fri 15 Jul 15:55:53 UTC 2016"
-  #user="javiercereijogarcia"
-  #PWD="/home/javiercereijogarcia/PCIe-EVR-300_tests"
-  #EPICSVERSION="3.14.12.5"
-  #EPICS_HOST_ARCH="centos7-x86_64"
-  #SHELLBOX=""
-  #EPICS_CA_ADDR_LIST=""
-  #EPICS_MODULE_INCLUDE_PATH=".:/usr/lib64:/usr/lib:/lib64:/lib"
-  dlload         /opt/epics/modules/environment/1.8.0/3.14.12.5/lib/centos7-x86_64/libenvironment.so
-  dbLoadDatabase /opt/epics/modules/environment/1.8.0/3.14.12.5/dbd/environment.dbd
-  environment_registerRecordDeviceDriver
-  < "evr300_0.cmd"
-  epicsEnvSet("SYS"             "SYS0")
-  epicsEnvSet("EVR"             "EVR0")
-  epicsEnvSet("EVR_PCIDOMAIN"   "0x0")
-  epicsEnvSet("EVR_PCIBUS"      "0x5")
-  epicsEnvSet("EVR_PCIDEVICE"   "0x0")
-  epicsEnvSet("EVR_PCIFUNCTION" "0x0")
-  require mrfioc2
-  require: mrfioc2 depends on devlib2 (2.6+).
-  require: Loading library /opt/epics/modules/devlib2/2.6.0/3.14.12.5/lib/centos7-x86_64/libdevlib2.so.
-  require: Loading /opt/epics/modules/devlib2/2.6.0/3.14.12.5/dbd/devlib2.dbd.
-  require: Calling devlib2_registerRecordDeviceDriver function.
-  require: Loading library /opt/epics/modules/mrfioc2/3.0.0/3.14.12.5/lib/centos7-x86_64/libmrfioc2.so.
-  require: Adding /opt/epics/modules/mrfioc2/3.0.0/db.
-  require: Adding /opt/epics/modules/mrfioc2/3.0.0/startup.
-  require: Loading /opt/epics/modules/mrfioc2/3.0.0/3.14.12.5/dbd/mrfioc2.dbd.
-  require: Calling mrfioc2_registerRecordDeviceDriver function.
-  
-  mrmEvrSetupPCI(EVR0, 0x0, 0x5, 0x0, 0x0)
-  Device EVR0  5:0.0
-  Using IRQ 16
-  Setting magic LE number!
-  EC 30: Enabling interrupts
-  FWVersion 0x17000008
-  Found version 8
-  Found EVR0:SFP0 EEPROM
-  PCIe: Out FP:0 FPUNIV:16 RB:0 IFP:0 GPIO:0
-  EVR FIFO task start
-  dbLoadRecords("./evr-pcie-300.db", "EVR=EVR0, SYS=SYS0")
-  iocInit
-  Starting iocInit
-  ############################################################################
-  ## EPICS R3.14.12.5-2015-08 $Date: Tue 2015-03-24 09:57:35 -0500$
-  ## EPICS Base built Oct  9 2015
-  ############################################################################
-  Set EVR clock 88052500.000000
-  cas warning: Configured TCP port was unavailable.
-  cas warning: Using dynamically assigned TCP port 48729,
-  cas warning: but now two or more servers share the same UDP port.
-  cas warning: Depending on your IP kernel this server may not be
-  cas warning: reachable with UDP unicast (a host's IP in EPICS_CA_ADDR_LIST)
-  iocRun: All initialization complete
-  epicsEnvSet IOCSH_PS1,"ics-essiip-01> "
-  ics-essiip-01>
+  [root@ics-cpci2-cpu1 tests_cPCI-EVG-230]# iocsh cPCI-evg-230_0.cmd 
+/opt/epics/bases/base-3.14.12.5/bin/centos7-x86_64/softIoc -D /opt/epics/bases/base-3.14.12.5/dbd/softIoc.dbd /tmp/iocsh.startup.3755
+#date="Thu 16 Aug 14:24:23 UTC 2016"
+#user="javiercereijogarcia"
+#PWD="/home/javiercereijogarcia/tests_cPCI-EVG-230"
+#EPICSVERSION="3.14.12.5"
+#EPICS_HOST_ARCH="centos7-x86_64"
+#SHELLBOX=""
+#EPICS_CA_ADDR_LIST=""
+#EPICS_MODULE_INCLUDE_PATH=".:/usr/lib64:/usr/lib:/lib64:/lib"
+dlload         /opt/epics/modules/environment/1.8.0/3.14.12.5/lib/centos7-x86_64/libenvironment.so
+dbLoadDatabase /opt/epics/modules/environment/1.8.0/3.14.12.5/dbd/environment.dbd
+environment_registerRecordDeviceDriver
+< "cPCI-evg-230_0.cmd"
+epicsEnvSet("SYS"             "testcPCI-EVG-230")
+epicsEnvSet("EVG"             "EVG0")
+epicsEnvSet("EVG_PCIBUS"      "0x10")
+epicsEnvSet("EVG_PCIDEVICE"   "0x0c")
+epicsEnvSet("EVG_PCIFUNCTION" "0x0")
+require mrfioc2
+require: mrfioc2 depends on devlib2 (2.6+).
+require: Loading library /opt/epics/modules/devlib2/2.6.0/3.14.12.5/lib/centos7-x86_64/libdevlib2.so.
+require: Loading /opt/epics/modules/devlib2/2.6.0/3.14.12.5/dbd/devlib2.dbd.
+require: Calling devlib2_registerRecordDeviceDriver function.
+require: Loading library /opt/epics/modules/mrfioc2/3.0.0/3.14.12.5/lib/centos7-x86_64/libmrfioc2.so.
+require: Adding /opt/epics/modules/mrfioc2/3.0.0/db.
+require: Adding /opt/epics/modules/mrfioc2/3.0.0/startup.
+require: Loading /opt/epics/modules/mrfioc2/3.0.0/3.14.12.5/dbd/mrfioc2.dbd.
+require: Calling mrfioc2_registerRecordDeviceDriver function.
+mrmEvgSetupPCI(EVG0, 0x10, 0x0c, 0x0)
+Device EVG0  16:12.0
+Using IRQ 16
+FPGA version: 20000005
+Firmware version: 00000005
+Sub-units:
+ FrontInp: 2, FrontOut: 6
+ UnivInp: 4, UnivOut: 4
+ RearInp: 16
+ Mxc: 8, Event triggers: 8, DBus bits: 8
+Found EVG0:SFP0 EEPROM
+PCI interrupt connected!
+dbLoadRecords("evg-cpci.db", "EVG=EVG0, SYS=testcPCI-EVG-230")
+iocInit
+Starting iocInit
+############################################################################
+## EPICS R3.14.12.5-2015-08 $Date: Tue 2015-03-24 09:57:35 -0500$
+## EPICS Base built Oct  9 2015
+############################################################################
+iocRun: All initialization complete
+epicsEnvSet IOCSH_PS1,"ics-cpci2-cpu1> "
+ics-cpci2-cpu1>
+
 \end{lstlisting}
 
 In addition, the PCI information is available within the running IOC via \texttt{devPCIShow} as follows:
 \begin{lstlisting}
-  ics-essiip-01> devPCIShow
+  ics-cpci2-cpu1> devPCIShow
   Look for the line with your configuration information, in our case is:
-  PCI 0000:05:00.0 IRQ 16
-    vendor:device 1204:ec30 rev 00
-  Where the vendor id 1204 is Lattice.
+  PCI 0000:10:0c.0 IRQ 16
+  vendor:device 10b5:9030 rev 00
+  Where the vendor id 10b5 is ??????????????.
   And show the PCI information with (the second parameter is the verbosity level):
 
-  ics-essiip-01> devPCIShow 9 0x1204
-  PCI 0000:05:00.0 IRQ 16
-    vendor:device 1204:ec30 rev 00
-    subved:subdev 1a3e:172c
-    class 118000 generic signal processing controller
-    driver mrf-pci
-    BAR 0 32-bit MMIO      1 MB
-    Matched 1 devices
-
-  ics-essiip-01>
+ics-cpci2-cpu1> devPCIShow 9 0x10b5
+...
+PCI 0000:10:0c.0 IRQ 16
+  vendor:device 10b5:9030 rev 00
+  subved:subdev 1a3e:20e6
+  class 118000 generic signal processing controller
+  driver mrf-pci
+  BAR 0 32-bit MMIO    128 B
+  BAR 2 32-bit MMIO     64 kB
+Matched 10 devices
+ics-cpci2-cpu1>
 \end{lstlisting}
 
 \newpage
 \chapter{System In-Situ Verification Procedure}
 This chapter provides the minimal system verification procedure. If one wants to do more step-by-step procedure which may be useful when testing the function of hardware and software, please see Reference~~\citep[see][p14]{EVR-USER-GUIDE}.
-
+\textcolor{magenta}{Change this table}
 \begin{table}[!htb]
   \centering
   \begin{tabular}{c|p{0.4\linewidth}|p{0.42\linewidth}}
@@ -459,88 +409,55 @@ This chapter provides the minimal system verification procedure. If one wants to
 \end{table}
 
 
-\section{Step 1 : Check the EVR and EVR connection}
+\section{Step 1 : Check the event frequency}
 Short comments on each command or a series of commands are shown before the corresponding command.
 \begin{lstlisting}[style=termstyle]
-  #
-  # We can check the EVG and EVR link status and the link clock setting,
-  # and can also see the link down counter as well.
-  #
-  user@host:~$ caget SYS0-EVR0:Link-Sts
-  SYS0-EVR0:Link-Sts             OK
-  user@host:~$ caget SYS0-EVR0:Link-Clk-I
-  SYS0-EVR0:Link-Clk-I           88.0519
-  #
-  # change the wrong clock setting on EVR, then we expect that the link status will be Fail.  
-  #
-  user@host:~$ caput SYS0-EVR0:Link-Clk-SP 100
-  Old : SYS0-EVR0:Link-Clk-SP          88.0525
-  New : SYS0-EVR0:Link-Clk-SP          100
-  user@host:~$ caget SYS0-EVR0:Link-Sts
-  SYS0-EVR0:Link-Sts             Fail
-  user@host:~$ caget SYS0-EVR0:Link-Clk-I
-  SYS0-EVR0:Link-Clk-I           100
-  #
-  # revert it back to the proper clock setting, and the link status will be OK.
-  #
-  user@host:~$ caput SYS0-EVR0:Link-Clk-SP 88.0525
-  Old : SYS0-EVR0:Link-Clk-SP          100
-  New : SYS0-EVR0:Link-Clk-SP          88.0525
-  user@host:~$ caget SYS0-EVR0:Link-Sts
-  SYS0-EVR0:Link-Sts             OK
-  user@host:~$ caget SYS0-EVR0:Link-Clk-I
-  SYS0-EVR0:Link-Clk-I           88.0519
 
-  #
-  # The link heartbeat counter is 18
-  #
-  user@host:~$ camonitor SYS0-EVR0:Cnt-LinkTimo-I
-  SYS0-EVR0:Cnt-LinkTimo-I       2016-06-30 10:23:23.949149 18
-
-  #
-  # open another terminal, to change the wrong link clock. 
-  #
-  # In another terminal:
-  user@host:~$ caput SYS0-EVR0:Link-Clk-SP 100
-  Old : SYS0-EVR0:Link-Clk-SP          88.0525
-  New : SYS0-EVR0:Link-Clk-SP          100
-
-  #
-  # so, the heartbeat counter should be increasing as follows: 
-  #
-  SYS0-EVR0:Cnt-LinkTimo-I       2016-06-30 10:24:12.037271 19
-  SYS0-EVR0:Cnt-LinkTimo-I       2016-06-30 10:24:13.735983 20
-  SYS0-EVR0:Cnt-LinkTimo-I       2016-06-30 10:24:15.438585 21
-  SYS0-EVR0:Cnt-LinkTimo-I       2016-06-30 10:24:17.137761 22
-  SYS0-EVR0:Cnt-LinkTimo-I       2016-06-30 10:24:18.836612 23
-
-  # the counter will be stopped after the proper value is given.
-  # In another terminal:
-  user@host:~$ caput SYS0-EVR0:Link-Clk-SP 88.0525
-  Old : SYS0-EVR0:Link-Clk-SP          100
-  New : SYS0-EVR0:Link-Clk-SP          88.0525
+#
+# Check the event frequency
+#
+ics-cpci2-cpu1> dbgf testcPCI-EVG-230-EVG0:EvtClk-Frequency-RB
+DBR_DOUBLE:         124.916
 \end{lstlisting}
 
-\section{Step 2 : Monitor Receiving and acknowledging Events}
-For this step, an additional EVR database file is needed to add to the end line of the \path{evr300_0.cmd} file. This additional database file is located in \path{/opt/epics/modules/mrfioc2/3.0.0/db} and no modification is needed. The new start-up script file, \path{evr300_1.cmd} is shown in Listing~\ref{list:evr300-1.cmd}. Note that Line \ref{dbpwd2} show the current directory \path{./}. And Line \ref{dbsoftevtpwd} shows no path of the database file, because it can be detected automatically. 
+\section{Step 2 : Emmit a software triggered event}
+$cPCI-evg-230_1.cmd:$
 \begin{lstlisting}[
     style=termstylenumber,
     label={list:evr300-1.cmd},
-    caption={Start-up script \texttt{evr300\_1.cmd}. }
+    caption={Start-up script \texttt{cPCI-evg-230\_1.cmd}. }
   ]
-  epicsEnvSet("SYS"             "SYS0")
-  epicsEnvSet("EVR"             "EVR0")
-  epicsEnvSet("EVR_PCIDOMAIN"   "0x0") 
-  epicsEnvSet("EVR_PCIBUS"      "0x5") 
-  epicsEnvSet("EVR_PCIDEVICE"   "0x0") 
-  epicsEnvSet("EVR_PCIFUNCTION" "0x0") 
-  
-  require mrfioc2
-  
-  mrmEvrSetupPCI($(EVR), $(EVR_PCIDOMAIN), $(EVR_PCIBUS), $(EVR_PCIDEVICE), $(EVR_PCIFUNCTION))
-    
-  dbLoadRecords("./evr-pcie-300.db",      "EVR=$(EVR), SYS=$(SYS)") (*@\label{dbpwd2}@*)
-  dbLoadRecords("evr-softEvent.template", "EVR=$(EVR), SYS=$(SYS), EVT=14, CODE=14") (*@\label{dbsoftevtpwd}@*)
+epicsEnvSet("SYS"             "testcPCI-EVG-230")
+epicsEnvSet("EVG"             "EVG0")
+epicsEnvSet("EVG_PCIBUS"      "0x10")
+epicsEnvSet("EVG_PCIDEVICE"   "0x0c")
+epicsEnvSet("EVG_PCIFUNCTION" "0x0")
+
+require mrfioc2
+
+mrmEvgSetupPCI($(EVG), $(EVG_PCIBUS), $(EVG_PCIDEVICE), $(EVG_PCIFUNCTION))
+
+dbLoadRecords("evg-cpci.db", "EVG=$(EVG), SYS=$(SYS)")
+\end{lstlisting}
+
+$cPCI-evr-230_1.cmd:$
+\begin{lstlisting}[
+    style=termstylenumber,
+    label={list:evr300-1.cmd},
+    caption={Start-up script \texttt{cPCI-evr-230\_1.cmd}. }
+  ]
+epicsEnvSet("SYS"             "testcPCI-EVG-230")
+epicsEnvSet("EVR"             "EVR0")
+epicsEnvSet("EVR_PCIDOMAIN"   "0")
+epicsEnvSet("EVR_PCIBUS"      "0x10")
+epicsEnvSet("EVR_PCIDEVICE"   "0xe")
+epicsEnvSet("EVR_PCIFUNCTION" "0")
+
+mrmEvrSetupPCI($(EVR), $(EVR_PCIDOMAIN), $(EVR_PCIBUS), $(EVR_PCIDEVICE), $(EVR_PCIFUNCTION))
+
+dbLoadRecords("evr-cpci-230.db", "EVR=$(EVR), SYS=$(SYS)")
+
+dbLoadRecords("evr-softEvent.template", "EVR=$(EVR), SYS=$(SYS), EVT=1, CODE=1")
 \end{lstlisting}
 
 Short comments on each command or a series of commands are shown before the corresponding command.
@@ -549,175 +466,226 @@ Short comments on each command or a series of commands are shown before the corr
   #
   # start the IOC
   #
-  user@host:~$ iocsh evr300_1.cmd
+[root@ics-cpci2-cpu1 tests_cPCI-EVG-230]# iocsh cPCI-evg-230_1.cmd
 
   #
-  # monitor the Event counter with 14. and check the time difference between counters, e.g., 132 and 133, is 0.071429s, i.e., 14 Hz.
-  # In another terminal:
-  user@host:~$ camonitor SYS0-EVR0:Event-14-Cnt-I
-  SYS0-EVR0:Event-14-Cnt-I       2016-06-30 13:55:36.008609 132
-  SYS0-EVR0:Event-14-Cnt-I       2016-06-30 13:55:36.080038 133
-  SYS0-EVR0:Event-14-Cnt-I       2016-06-30 13:55:36.151467 134
-  SYS0-EVR0:Event-14-Cnt-I       2016-06-30 13:55:36.222895 135
-  SYS0-EVR0:Event-14-Cnt-I       2016-06-30 13:55:36.294324 136
+  # Enable the software event
+ #
+ics-cpci2-cpu1> dbpf testcPCI-EVG-230-EVG0:SoftEvt-Enable-Sel "Enabled"
+DBR_STRING:          "Enabled"
+  
+#
+#In another terminal
+#
+[root@ics-cpci2-cpu1 tests_cPCI-EVG-230]# iocsh cPCI-evr-230_1.cmd
+
+#
+# And change the following variable so we can see if the event is received
+#
+var evrEventDebug 2
+
+#
+#Send the event
+#
+ics-cpci2-cpu1> dbpf testcPCI-EVG-230-EVG0:SoftEvt-EvtCode-SP 1
+DBR_LONG:           1         0x1
+
+#
+# The EVR should receive the event.
+#
 \end{lstlisting}
 
 
-\section{Step 3 : Generate Trigger Signals from EVR}
-For this step, an additional EVR database file with two configrations is also needed to add to the end line of the \path{evr300_1.cmd} file. This additional database file is located in \path{/opt/epics/modules/mrfioc2/3.0.0/db}, and no modification is needed. Thus, the new start-up script file, \path{evr300_2.cmd} is shown in Listing~\ref{list:evr300-2.cmd}. Note that each path of database files should be checked correctly. 
+\section{Step 2 : Emmit a sequence}
+$ cPCI-evg-230\_2.cmd$
 \begin{lstlisting}[ 
     style=termstylenumber,
-    label={list:evr300-2.cmd},
-    caption={Start-up script \texttt{evr300\_2.cmd}.}
+%    label={list:cPCI-evg-230_2.cmd},
+    caption={Start-up script \texttt{cPCI-evg-230\_2.cmd}.}
   ]
-  epicsEnvSet("SYS"             "SYS0")
-  epicsEnvSet("EVR"             "EVR0")
-  epicsEnvSet("EVR_PCIDOMAIN"   "0x0")
-  epicsEnvSet("EVR_PCIBUS"      "0x5")
-  epicsEnvSet("EVR_PCIDEVICE"   "0x0")
-  epicsEnvSet("EVR_PCIFUNCTION" "0x0")
-  
-  require mrfioc2
-  
-  mrmEvrSetupPCI($(EVR), $(EVR_PCIDOMAIN), $(EVR_PCIBUS), $(EVR_PCIDEVICE), $(EVR_PCIFUNCTION))
-  
-  dbLoadRecords("./evr-pcie-300.db",      "EVR=$(EVR), SYS=$(SYS)")
-  dbLoadRecords("evr-softEvent.template", "EVR=$(EVR), SYS=$(SYS), EVT=14, CODE=14") 
-  dbLoadRecords("evr-pulserMap.template", "EVR=$(EVR), SYS=$(SYS), PID=0, F=Trig, ID=0, EVT=14")
-  dbLoadRecords("evr-pulserMap.template", "EVR=$(EVR), SYS=$(SYS), PID=1, F=Trig, ID=0, EVT=14")
-\end{lstlisting}
+epicsEnvSet("SYS"             "testcPCI-EVG-230")
+epicsEnvSet("EVG"             "EVG0")
+epicsEnvSet("EVG_PCIBUS"      "0x10")
+epicsEnvSet("EVG_PCIDEVICE"   "0xc")
+epicsEnvSet("EVG_PCIFUNCTION" "0")
 
-An EVR is composed of several logical sub-units, and one of the logical sub-units is the pulse generator. And each pulse generator has an associated Delay and Width \cite{EVR-USER-GUIDE}. In the following procedure, two pulse generators are mapped to the \path{UNIV0} and \path{UNIV1} of IFB-300, which are connected to the channel 1 and 2 of the oscilloscope respectively in order to see whether output signals are generated according to Delay's and Width's changes. Short comments on each command or a series of commands are shown before the corresponding command.
+mrmEvgSetupPCI($(EVG), $(EVG_PCIBUS), $(EVG_PCIDEVICE), $(EVG_PCIFUNCTION))
 
-\subsection{\texttt{UNIV0} output}
-\begin{lstlisting}[style=termstyle]
-  #
-  # start the IOC
-  #
-  user@host:~$ iocsh evr300_2.cmd
+dbLoadRecords("evg-cpci.db", "EVG=$(EVG), SYS=$(SYS)")
 
-  #
-  # open the new terminal, and 
-  # set the Pulse generator 0 to the UNIV0 output
-  # 
-  user@host:~$ caput SYS0-EVR0:FrontUnivOut0-Src-SP 0
-  Old : SYS0-EVR0:FrontUnivOut0-Src-SP 63
-  New : SYS0-EVR0:FrontUnivOut0-Src-SP 0
-
-  #
-  # set the trigger event 14 to the pulse generator 0
-  #
-  user@host:~$ caput SYS0-EVR0:Pul0-Evt-Trig0-SP      14
-  Old : SYS0-EVR0:Pul0-Evt-Trig0-SP    14
-  New : SYS0-EVR0:Pul0-Evt-Trig0-SP    14
-
-  #
-  # set the width time of the pulse generator 0.
-  # 10 000 is translated to 10 ms.
-  #
-  user@host:~$ caput SYS0-EVR0:Pul0-Width-SP     10000
-  Old : SYS0-EVR0:Pul0-Width-SP        0
-  New : SYS0-EVR0:Pul0-Width-SP        10000
-\end{lstlisting}
-Figure~\ref{fig:14Hz} shows the output of \texttt{UNIV0} in an oscilloscope. 
-\begin{figure}[!ht]
-  \centering
-    \includegraphics[width=0.8\textwidth]{./pictures/img_1965.eps}
-  \caption{14 Hz signal with 10 ms width}
-  \label{fig:14Hz}
-\end{figure}
-
-
-\subsection{Width Time of Pulse Generator}
-
-\begin{lstlisting}[style=termstyle]
-  #
-  # change the width time of the pulse generator 0 from 10 ms to 50 ms
-  #
-  user@host:~$ caput SYS0-EVR0:Pul0-Width-SP     50000
-  Old : SYS0-EVR0:Pul0-Width-SP        10000
-  New : SYS0-EVR0:Pul0-Width-SP        50000
-  
-\end{lstlisting}
-and the output is shown in Figure~\ref{fig:50ms}.
-\begin{figure}[!ht]
-  \centering
-    \includegraphics[width=0.78\textwidth]{./pictures/img_1966.eps}
-  \caption{14 Hz signal with 50 ms width}
-  \label{fig:50ms}
-\end{figure}
-
-And one can also check them via \path{SYS0-EVR0:Pul0-Width-RB} as follows:
-\begin{lstlisting}[style=termstyle]
-  #
-  # change the width time to 50 ms, 40 ms, and 80 ms in another terminal, and can see that the Read Back (RB) value is changing.
-  #
-  user@host:~$ camonitor SYS0-EVR0:Pul0-Width-RB
-  SYS0-EVR0:Pul0-Width-RB        2016-07-01 16:05:10.512348 50000
-  SYS0-EVR0:Pul0-Width-RB        2016-07-01 16:07:25.632305 40000
-  SYS0-EVR0:Pul0-Width-RB        2016-07-01 16:08:10.190883 80000
+dbLoadRecords("evgSoftSeq.template", "EVG=$(EVG), SYS=$(SYS), SEQNUM=1, NELM=3")
   
 \end{lstlisting}
 
-\subsection{Delay Time of Pulse Generator}
 
-\begin{lstlisting}[style=termstyle]
-  #
-  # Set the width time - 20 ms - of the pulse generator 0 
-  #
-  user@host:~$ caput SYS0-EVR0:Pul0-Width-SP     20000
-  Old : SYS0-EVR0:Pul0-Width-SP        80000
-  New : SYS0-EVR0:Pul0-Width-SP        20000
 
-  #
-  # Set the Pulse generator 1 to the UNIV1 output
-  # 
-  user@host:~$ caput SYS0-EVR0:FrontUnivOut1-Src-SP 1
-  Old : SYS0-EVR0:FrontUnivOut1-Src-SP 63
-  New : SYS0-EVR0:FrontUnivOut1-Src-SP 0
+$ cPCI-evr-230\_2.cmd$
+\begin{lstlisting}[ 
+    style=termstylenumber,
+%    label={list:cPCI-evr-230_2.cmd},
+    caption={Start-up script \texttt{cPCI-evr-230\_2.cmd}.}
+  ]
+epicsEnvSet("SYS"             "testcPCI-EVG-230")
+epicsEnvSet("EVR"             "EVR0")
+epicsEnvSet("EVR_PCIDOMAIN"   "0")
+epicsEnvSet("EVR_PCIBUS"      "0x10")
+epicsEnvSet("EVR_PCIDEVICE"   "0xe")
+epicsEnvSet("EVR_PCIFUNCTION" "0")
 
-  #
-  # Set the trigger event 14 to the pulse generator 1
-  #
-  user@host:~ $ caput SYS0-EVR0:Pul1-Evt-Trig0-SP      14
-  Old : SYS0-EVR0:Pul1-Evt-Trig0-SP    14
-  New : SYS0-EVR0:Pul1-Evt-Trig0-SP    14
+mrmEvrSetupPCI($(EVR), $(EVR_PCIDOMAIN), $(EVR_PCIBUS), $(EVR_PCIDEVICE), $(EVR_PCIFUNCTION))
 
-  #
-  # Set the width time - 20 ms - of the pulse generator 1 
-  #
-  user@host:~$ caput SYS0-EVR0:Pul1-Width-SP     20000
-  Old : SYS0-EVR0:Pul1-Width-SP        0
-  New : SYS0-EVR0:Pul1-Width-SP        20000
+dbLoadRecords("evr-cpci-230.db", "EVR=$(EVR), SYS=$(SYS)")
 
-  #
-  # Set the delay time - 30 ms - of the pulse generator 1 
-  #
-  user@host:~$ caput SYS0-EVR0:Pul1-Delay-SP     30000
-  Old : SYS0-EVR0:Pul1-Delay-SP        0
-  New : SYS0-EVR0:Pul1-Delay-SP        30000
+
+dbLoadRecords("evr-softEvent.template", "EVR=$(EVR), SYS=$(SYS), EVT=1, CODE=1")
+dbLoadRecords("evr-softEvent.template", "EVR=$(EVR), SYS=$(SYS), EVT=2, CODE=2")
+dbLoadRecords("evr-softEvent.template", "EVR=$(EVR), SYS=$(SYS), EVT=3, CODE=3")
+  
 \end{lstlisting}
-Figure~\ref{fig:delay} shows the result.
-\begin{figure}[!htb]
-  \centering
-    \includegraphics[width=0.78\textwidth]{./pictures/img_1982.eps}
-  \caption{Two 14 Hz signals with 30 ms delay}
-  \label{fig:delay}
-\end{figure}
 
-\clearpage
-\chapter{Troubleshooting}
-This chapter has trial and error while installing and configuring the MRF PCIe-EVR-300.
+\section{Step 3 : Emmit an event triggered from an output source}
+%%  Check if it is this $testcPCI-EVG-230-EVG0:AcTrig-TrigSrc0-SP$ or this $testcPCI-EVG-230-EVG0:UnivInp0-TrigSrc0-SP$.
+%% Previoosly need $testcPCI-EVG-230-EVG0:TrigEvt0-EvtCode-SP event_number$
+%% \begin{lstlisting}[ 
+%%     style=termstylenumber,
+%%     label={list:evr300-2.cmd},
+%%     caption={Start-up script \texttt{evr300\_2.cmd}.}
+%%   ]
+  
+%% \end{lstlisting}
 
-\section{PCI error}
-If the device file permission is wrong, one can see the following error:
-\begin{lstlisting}
-mrmEvrSetupPCI(EVR0, 0, 0x5, 0x0, 0)
-Device EVR0  5:0.0
-Using IRQ 16
-Can neither open resource file nor uio file of PCI device 0000:05:00.0 BAR 0
-PCI error: Failed to map BARs 0 for EC 30
-\end{lstlisting}
+%% %% An EVR is compose
+%% d of several logical sub-units, and one of the logical sub-units is the pulse generator. And each pulse generator has an associated Delay and Width \cite{EVR-USER-GUIDE}. In the following procedure, two pulse generators are mapped to the \path{UNIV0} and \path{UNIV1} of IFB-300, which are connected to the channel 1 and 2 of the oscilloscope respectively in order to see whether output signals are generated according to Delay's and Width's changes. Short comments on each command or a series of commands are shown before the corresponding command.
+
+%% \subsection{\texttt{UNIV0} output}
+%% \begin{lstlisting}[style=termstyle]
+%%   #
+%%   # start the IOC
+%%   #
+%%   user@host:~$ iocsh evr300_2.cmd
+
+%%   #
+%%   # open the new terminal, and 
+%%   # set the Pulse generator 0 to the UNIV0 output
+%%   # 
+%%   user@host:~$ caput SYS0-EVR0:FrontUnivOut0-Src-SP 0
+%%   Old : SYS0-EVR0:FrontUnivOut0-Src-SP 63
+%%   New : SYS0-EVR0:FrontUnivOut0-Src-SP 0
+
+%%   #
+%%   # set the trigger event 14 to the pulse generator 0
+%%   #
+%%   user@host:~$ caput SYS0-EVR0:Pul0-Evt-Trig0-SP      14
+%%   Old : SYS0-EVR0:Pul0-Evt-Trig0-SP    14
+%%   New : SYS0-EVR0:Pul0-Evt-Trig0-SP    14
+
+%%   #
+%%   # set the width time of the pulse generator 0.
+%%   # 10 000 is translated to 10 ms.
+%%   #
+%%   user@host:~$ caput SYS0-EVR0:Pul0-Width-SP     10000
+%%   Old : SYS0-EVR0:Pul0-Width-SP        0
+%%   New : SYS0-EVR0:Pul0-Width-SP        10000
+%% \end{lstlisting}
+%% Figure~\ref{fig:14Hz} shows the output of \texttt{UNIV0} in an oscilloscope. 
+%% \begin{figure}[!ht]
+%%   \centering
+%%     \includegraphics[width=0.8\textwidth]{./pictures/img_1965.eps}
+%%   \caption{14 Hz signal with 10 ms width}
+%%   \label{fig:14Hz}
+%% \end{figure}
+
+
+%% \subsection{Width Time of Pulse Generator}
+
+%% \begin{lstlisting}[style=termstyle]
+%%   #
+%%   # change the width time of the pulse generator 0 from 10 ms to 50 ms
+%%   #
+%%   user@host:~$ caput SYS0-EVR0:Pul0-Width-SP     50000
+%%   Old : SYS0-EVR0:Pul0-Width-SP        10000
+%%   New : SYS0-EVR0:Pul0-Width-SP        50000
+  
+%% \end{lstlisting}
+%% and the output is shown in Figure~\ref{fig:50ms}.
+%% \begin{figure}[!ht]
+%%   \centering
+%%     \includegraphics[width=0.78\textwidth]{./pictures/img_1966.eps}
+%%   \caption{14 Hz signal with 50 ms width}
+%%   \label{fig:50ms}
+%% \end{figure}
+
+%% And one can also check them via \path{SYS0-EVR0:Pul0-Width-RB} as follows:
+%% \begin{lstlisting}[style=termstyle]
+%%   #
+%%   # change the width time to 50 ms, 40 ms, and 80 ms in another terminal, and can see that the Read Back (RB) value is changing.
+%%   #
+%%   user@host:~$ camonitor SYS0-EVR0:Pul0-Width-RB
+%%   SYS0-EVR0:Pul0-Width-RB        2016-07-01 16:05:10.512348 50000
+%%   SYS0-EVR0:Pul0-Width-RB        2016-07-01 16:07:25.632305 40000
+%%   SYS0-EVR0:Pul0-Width-RB        2016-07-01 16:08:10.190883 80000
+  
+%% \end{lstlisting}
+
+%% \subsection{Delay Time of Pulse Generator}
+
+%% \begin{lstlisting}[style=termstyle]
+%%   #
+%%   # Set the width time - 20 ms - of the pulse generator 0 
+%%   #
+%%   user@host:~$ caput SYS0-EVR0:Pul0-Width-SP     20000
+%%   Old : SYS0-EVR0:Pul0-Width-SP        80000
+%%   New : SYS0-EVR0:Pul0-Width-SP        20000
+
+%%   #
+%%   # Set the Pulse generator 1 to the UNIV1 output
+%%   # 
+%%   user@host:~$ caput SYS0-EVR0:FrontUnivOut1-Src-SP 1
+%%   Old : SYS0-EVR0:FrontUnivOut1-Src-SP 63
+%%   New : SYS0-EVR0:FrontUnivOut1-Src-SP 0
+
+%%   #
+%%   # Set the trigger event 14 to the pulse generator 1
+%%   #
+%%   user@host:~ $ caput SYS0-EVR0:Pul1-Evt-Trig0-SP      14
+%%   Old : SYS0-EVR0:Pul1-Evt-Trig0-SP    14
+%%   New : SYS0-EVR0:Pul1-Evt-Trig0-SP    14
+
+%%   #
+%%   # Set the width time - 20 ms - of the pulse generator 1 
+%%   #
+%%   user@host:~$ caput SYS0-EVR0:Pul1-Width-SP     20000
+%%   Old : SYS0-EVR0:Pul1-Width-SP        0
+%%   New : SYS0-EVR0:Pul1-Width-SP        20000
+
+%%   #
+%%   # Set the delay time - 30 ms - of the pulse generator 1 
+%%   #
+%%   user@host:~$ caput SYS0-EVR0:Pul1-Delay-SP     30000
+%%   Old : SYS0-EVR0:Pul1-Delay-SP        0
+%%   New : SYS0-EVR0:Pul1-Delay-SP        30000
+%% \end{lstlisting}
+%% Figure~\ref{fig:delay} shows the result.
+%% \begin{figure}[!htb]
+%%   \centering
+%%     \includegraphics[width=0.78\textwidth]{./pictures/img_1982.eps}
+%%   \caption{Two 14 Hz signals with 30 ms delay}
+%%   \label{fig:delay}
+%% \end{figure}
+
+%% \clearpage
+%% \chapter{Troubleshooting}
+%% This chapter has trial and error while installing and configuring the MRF PCIe-EVR-300.
+
+%% \section{PCI error}
+%% If the device file permission is wrong, one can see the following error:
+%% \begin{lstlisting}
+%% mrmEvrSetupPCI(EVR0, 0, 0x5, 0x0, 0)
+%% Device EVR0  5:0.0
+%% Using IRQ 16
+%% Can neither open resource file nor uio file of PCI device 0000:05:00.0 BAR 0
+%% PCI error: Failed to map BARs 0 for EC 30
+%% \end{lstlisting}
 
 
 \clearpage
