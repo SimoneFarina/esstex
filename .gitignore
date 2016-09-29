@@ -29,7 +29,6 @@ doc_*
 *.acr
 *.alg
 *.ist
-Makefile
 *.nav
 *.snm
 #*
