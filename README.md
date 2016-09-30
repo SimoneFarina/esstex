@@ -20,10 +20,11 @@ $ latex a.tex
 $ dvipdf a.dvi
 ```
 
-### Required packages for Debian
+### Required packages for Debian 8
 ```
-aptitude install texlive-full
+aptitude install texlive-full build-essential git
 ```
+With Debian, both latex and pdflate work well
 
 ### Required packages for CentOS 7.2 (1511) 
 ```
