@@ -20,6 +20,17 @@ $ latex a.tex
 $ dvipdf a.dvi
 ```
 
+### Required packages for Debian
+```
+aptitude install texlive-full
+```
+
+### Required packages for CentOS 7.2 (1511) 
+```
+yum -y install texlive texlive-multirow textlive-framed texlive-pdfpages texlive-epstopdf 
+```
+Redhat, CentOS, and Fedora do not have the proper package in order to use latex not pdflatex, so with them, I cannot use latex. Makefile will use pdflatex default. 
+
 # Makefile for them
 
 * There is a good Makefile for LaTeX, one should check the following site:
