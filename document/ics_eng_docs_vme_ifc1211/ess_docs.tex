@@ -12,6 +12,8 @@
 \usepackage[autostyle]{csquotes}
 %\usepackage[table]{xcolor}
 
+\definecolor{LightCyan}{rgb}{0.88,1,1}
+
 \setsecnumdepth{subsection}
 
 \begin{document}
@@ -168,14 +170,36 @@ Figure~\ref{fig:ser_cable} shows the usual cable enumeration and Table~\ref{tabl
 \begin{table}[!hb]
   \centering
   
-  \begin{tabular}{
-  		| >{\sffamily\raggedright}p{2.0cm}
-  		| >{\sffamily}p{\dimexpr\textwidth-6\tabcolsep-0\fboxsep-4.5cm\relax} |
-  	}
+  \begin{tabular}{|c|c|c|c|c|}\cline{2-5}
+  	\multicolumn{1}{c|}{}
+  	& \multicolumn{2}{c|}{\cellcolor{gray!20}\bfseries\sffamily Moxa NPort 5610 (ics-moxabox-01)} 
+  	& \multicolumn{2}{c|}{\cellcolor{gray!20}\bfseries\sffamily IFC1211} \\
   	\hline
-  	\rowcolor{gray!20}\multicolumn{1}{|c|}{\bfseries\sffamily Moxa NPort 5610 (ics-moxabox-01)} 
-  	& \multicolumn{1}{c|}{\bfseries\sffamily IFC1211} \\
+  	\cellcolor{gray!20}{\bfseries\sffamily Pin n$^{\circ}$}
+  	& Color
+  	& Description
+  	& Color
+  	& Description \\
   	\hline
+  	1 & white/orange stripe & DSR (in)     & green solid                                 & Not used (DCD) \\
+  	\hline\rowcolor{LightCyan}
+  	2 & orange solid        & RTS (out)    & orange solid                                & RTS            \\
+  	\hline
+  	3 & white/green stripe  & GND          & white/green stripe                          & GNDC           \\
+  	\hline\rowcolor{LightCyan}
+  	4 & blue solid          & TxD (out)    & white/blue stripe                           & TXD            \\
+  	\hline
+  	5 & white/blue stripe   & RxD (in)     & blue solid                                  & RXD            \\
+  	\hline\rowcolor{LightCyan}
+  	\multirow{2}{*}{6} & \multirow{2}{*}{green solid} & \multirow{2}{*}{DCD (in)} & none (do not connect & \multirow{2}{*}{GNDC} \\
+  	\rowcolor{LightCyan}
+  	&&&to white/orange cable)&\\
+  	\hline
+  	7 & white/brown stripe  & CTS (in)     & white/brown stripe                          & CTS            \\
+  	\hline\rowcolor{LightCyan}
+  	8 & brown solid         & DTR (out)    & brown solid                                 & Not used (DTR) \\
+  	\hline
+\iffalse
   	\begin{tabular}[t]{
   			| >{\ttfamily\raggedright}p{1.0cm}
   			| >{\sffamily\raggedright}p{2.2cm}
@@ -231,6 +255,7 @@ Figure~\ref{fig:ser_cable} shows the usual cable enumeration and Table~\ref{tabl
   		8 & brown solid                                 & Not used (DTR) \\
   		\hline
   	\end{tabular} \\[15ex]
+\fi
   \end{tabular}
 \iffalse
   \begin{tabular}{l|l|l}
