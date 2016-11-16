@@ -11,8 +11,25 @@
 \usepackage[numbers]{natbib}
 \usepackage[autostyle]{csquotes}
 %\usepackage[table]{xcolor}
+\usepackage{placeins}
 
-\definecolor{LightCyan}{rgb}{0.88,1,1}
+\definecolor{LightCyan}{rgb}{0.898,0.937,0.945}
+\lstdefinestyle{texteditor}{
+	backgroundcolor=\color{LightCyan},
+	belowcaptionskip=1\baselineskip,
+	breaklines=true,
+	frame=single,
+	rulecolor=\color{black},
+	xleftmargin=\parindent,
+	language=c,
+	showstringspaces=false,
+	basicstyle=\footnotesize\ttfamily,
+	keywordstyle=\bfseries\color{blue},%green!40!black},
+	commentstyle=\itshape\color{purple!40!black},
+	identifierstyle=\color{blue},
+	stringstyle=\color{red}
+}
+
 
 \setsecnumdepth{subsection}
 
@@ -74,29 +91,30 @@
 
 %%% Actual Document Start at below
 \chapter{Overview}
-At European Spallation Source (ESS), Integrated Control System (ICS) uses the VME IOxOS IFC1211 {\footnote{\url{http://www.ioxos.ch/images/pdf/02_press_release/VME\%203rd\%20Generation.pdf}}} to implement EPICS IOCs that will eventually be ported to the uTCA equivalent boards IFC1410 \& IFC1420.
+At European Spallation Source (ESS), the Integrated Control System (ICS) group uses the IOxOS IFC1211 VME card {\footnote{\url{http://www.ioxos.ch/images/pdf/02_press_release/VME\%203rd\%20Generation.pdf}}} to implement EPICS IOCs that will later on be ported to the uTCA boards IFC1410 \& IFC1420 that have similar hardware architectures and the same main components.
 
 \section{Scope}
 \begin{itemize}
 \item This document provides a brief overview of the IFC1211 board features and describes the steps necessary to boot-up a basic system.
-\item This document provides the informations to create and compile a U-boot script to be used at startup to load configuration settings from a server. 
+\item This document provides the information to create and compile a U-boot script to be used at startup to load configuration settings from a server. 
 \item The purpose of this document is to describe the engineering procedure and troubleshooting about how the IFC1211 board will be booted up and how to import the ESS EPICS Environment (EEE).
-\item This document provides a short appendix with the necessary steps to setup a server that provides tftp and nfs functionalities (required). 
+\iffalse
+\item This document provides a short appendix with the necessary steps to setup a server that provides tftp and nfs functionalities (required).
+\fi
 \end{itemize}
 \textbf{Note that this is a very early draft document and should be updated as development progresses.}
 
 \section{Target Audience}
-This document is targeted to ICS engineers and technical stakeholders of the ESS IOCs. It is assumed that the target audience has a technical background in the EPICS development and Linux environment.
+This document is targeted to ICS engineers and technical stakeholders of the ESS IOCs. %It is assumed that the target audience has a technical background in the EPICS development and Linux environment.
 
 \chapter{System Description}
-The IOxOS IFC1211 is a VME64x compliant board that is currently being used to develop EPICS IOCs because its hardware mimics that of the microTCA.4 AMC card currently under development.
+The IOxOS IFC1211 is a VME64x compliant board that is currently being used to develop EPICS IOCs because its hardware mimics that of the microTCA.4 AMC cards currently under development.
 The IFC1211 embeds a T2081 QorIQ 64bit PowerPC manufactured by Freescale, a 32NT24 PCIexpress switch and 3 FPGAs: a XC7A75 Artix 7 (PON), a XC7A35 Artix 7 (IO) and a XCKU040 Kintex Ultrascale.
 
-The PON FPGA is preconfigured and is supposed to manage the programming procedure of the other two FPGAs and the reset signal for the T2081.
-The IFC\_1211 Hardware Technical User's Guide \cite{IFC1211_HW_TUG} describes more in depth the board capabilities and the different configurations that might be set and loaded by the board at bootstrap.
+The PON FPGA is preconfigured and is supposed to manage both the programming procedure of the other two FPGAs and the reset signal for the T2081.
+The IFC\_1211 Hardware Technical User's Guide \cite{IFC1211_HW_TUG} describes more in depth the board capabilities and the different configurations that might be set and loaded by the board at bootstrap, it also describes some added functionalities to the common U-boot distribution that allow to check and modify bitstream images for the programmable logics so that the PON FPGA can program them at startup time, all these informations are provided in the pages from 77 to 80.
 
 This document describes how to set up an IFC1211 board to be able to boot from a NFS mounted file system.
-
 
 \section{IFC1211}
 Figure~\ref{fig:ifc1211_dim} shows the rough physical dimensions $233\times 160~\mathrm{mm}{}^2$ of the VME IFC1211 card.
@@ -108,6 +126,18 @@ Figure~\ref{fig:ifc1211_dim} shows the rough physical dimensions $233\times 160~
     IFC1211-A1 VME64x FMC Carrier with additional XMC connectors.
   }
   \label{fig:ifc1211_dim}   
+\end{figure}
+
+Figure~\ref{fig:ser_ifc_con} describes the position of the various components on the board, it is important to take note of the position of the dip switches (SWxxx) as they need to be configured before providing power to the board.
+
+\begin{figure}[!htb]
+	\centering
+	\hspace*{-2.5cm}
+	\includegraphics[width=1.4\textwidth]{./pictures/ser_ifc_con.eps}
+	\caption{
+		Dip Switches and Serial interface locations on the IFC1211.
+	}
+	\label{fig:ser_ifc_con}
 \end{figure}
 
 The block diagram shown in Figure~\ref{fig:ifc1211_bd} represents the interconnection scheme amongst the different components.
@@ -127,23 +157,27 @@ As can be seen the T2081 has direct access to all the 3 front panel RJ45 connect
 The board is available in two different configurations depending on the mezzanine cards that it is supposed to host, the IFC1211-A0 version is configured to support up to two FMC HPC cards while the -A1 version is tailored for a FMC and a XMC cards.
 The differential connections of both the FMCs are routed to the Xilinx Ultrascale FPGA. Additional 4 XCVR lanes per slot are provided and routed to the same FPGA MGT blocks.
 
+%The Hardware User's Guide \cite{IFC1211_HW_TUG} also describes some added functionalities to the common U-boot distribution that allow to check and modify bitstream images for the FPGAs so that the PON FPGA can program them at startup time, all these informations are provided in the pages from 77 to 80.
+
 
 \clearpage
 
 \chapter{System Environment}
-Before describing the engineering procedure necessary to boot up the IFC1211 VME board, it is necessary to have the following list of hardware and software components. Here we will show the hardware and software lists, their block diagrams, and their setup in the ICS lab at ESS. The information shown in this chapter is used in the ICS Lab at ESS.
+Before describing the engineering procedure necessary to boot up the IFC1211 VME board, it is necessary to have the following list of hardware and software components. Here we will show the hardware and software requirements and how to access to the infrastructure already available in the ICS lab at ESS. The information shown in this chapter is used in the ICS Lab at ESS.
 
 
 \section{Hardware}
-Table~\ref{table:hwlist} shows the list of hardware that is necessary to boot up the board. The hardware list provided mimics the one available in the ICS lab, if it is necessary to use a different component please be aware that despite it might provide similar functionalities it could be necessary to modify the instructions contained in this Engineering Manual according to the informations contained in the manufacturers datasheet or to the software revision number. It is assumed that a computer providing NFS and TFTP server functionalities is available and is configured properly to allow incoming connections from the IFC1211 board, if this is not the case a short overview of the necessary steps is provided in the Appendix.
+Table~\ref{table:hwlist} shows the list of hardware that is necessary to boot up the board. The hardware list provided mimics the one available in the ICS lab, if it is necessary to use a different component please be aware that despite it might provide similar functionalities it could be necessary to modify the instructions contained in this Engineering Manual according to the informations contained in the manufacturers datasheet or to the software revision number. It is assumed that a computer providing NFS and TFTP server functionalities is available and is configured properly to allow incoming connections from the IFC1211 board, if this is not the case an overview of the necessary steps is provided in the <name of document> \cite{SETUP_LAB_INFRASTRUCTURE}.
 
 \begin{table}[!hb]
   \centering
   \begin{tabular}{l|l|l}
     \toprule
     Hardware                  & Info                                                               & Serial Number              \\\midrule
-    IFC1211                   & \texttt{ICS TAG-382} or \texttt{ICS TAG-382}                       & 16370107 or 16370109       \\\midrule
-    VME Crate                 & Hostname : icsb-vmeifc1210-529 or icsb-vmeifc1210-528              &                            \\\midrule
+    \multicolumn{1}{l|}{\multirow{2}{*}{IFC1211}}  & \texttt{ICS TAG-382} or                       & 16370107 or                \\
+    \multicolumn{1}{l|}{}     & \texttt{ICS TAG-382}                                               & 16370109                   \\\midrule
+    \multicolumn{1}{l|}{\multirow{2}{*}{VME Crate}}& Hostname : icsb-vmeifc1210-529                &                            \\
+    \multicolumn{1}{l|}{}     & or icsb-vmeifc1210-528                                             &                            \\\midrule
     MoxaBox                   & Hostname : ics-moxabox-01                                          &                            \\\midrule
     Serial cable              & see Figure~\ref{fig:ser_cable} and Table~\ref{table:ser_cable_tab} &                            \\\midrule
     Desktop or server PC      &                                                                    &                            \\\bottomrule
@@ -152,11 +186,36 @@ Table~\ref{table:hwlist} shows the list of hardware that is necessary to boot up
   \label{table:hwlist}
 \end{table}
 
+\newpage
+\subsection{IFC1211 Dip Switches Setting}
+Before powering up the board it is necessary to ensure that the Dip switches whose value is read at bootstrap are configured in the right way.
+The position of these switches on the board is depicted in Figure~\ref{fig:ser_ifc_con}.
+Their position should be set as follows:
 
+\begin{table}[!hb]
+	\centering
+	\begin{tabular}{l|l|c|c|c|c|c|c|c|c|}\hline\rowcolor{gray!30}
+		\multicolumn{10}{|c|}{IFC1210 Switch setting} \\
+		\hline\rowcolor{gray!10}
+		\multicolumn{2}{|c|}{Switch Designator} & \multicolumn{8}{c|}{Switch Lever n$^{\circ}$} \\
+		\hline
+		\multicolumn{2}{|c|}{} & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 \\
+		\hline
+		\multicolumn{1}{|c}{SW100} & \multicolumn{1}{c|}{:} & 0 & 0 & 0 & 0 &&&&\\\hline
+		\multicolumn{1}{|c}{SW101} & \multicolumn{1}{c|}{:} & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\\hline
+		\multicolumn{1}{|c}{SW102} & \multicolumn{1}{c|}{:} & 0 & 1 & 1 & 0 & 0 & 0 & 0 & 0\\\hline
+	\end{tabular}
+	\caption[]{Dip Switches Setting}
+	\label{table:dp_setting}
+\end{table}
+\FloatBarrier
+
+
+\subsection{Serial Connection}
 In order to access the boot-loader shell the user shall have access to the serial interface.   
 The Serial link to the IFC1211 T2081 processor is routed through a standard RJ45 connector but there is no off-the-shelf cable that matches the connection between the IFC board and the MoxaBox serial to ethernet device so the user must create his own according to the following instructions.
 
-Figure~\ref{fig:ser_cable} shows the usual cable enumeration and Table~\ref{table:ser_cable_tab} shows the required connections at both ends assuming that the cable end at the Moxa NPort device follows the coloring scheme previously shown.
+Figure~\ref{fig:ser_cable} shows the usual cable enumeration and Table~\ref{table:ser_cable_tab} shows the required connections at both ends assuming that the cable end at the Moxa NPort device follows the T568B coloring scheme shown.
 
 \begin{figure}[!htb]
 	\centering
@@ -172,31 +231,34 @@ Figure~\ref{fig:ser_cable} shows the usual cable enumeration and Table~\ref{tabl
   
   \begin{tabular}{|c|c|c|c|c|}\cline{2-5}
   	\multicolumn{1}{c|}{}
-  	& \multicolumn{2}{c|}{\cellcolor{gray!20}\bfseries\sffamily Moxa NPort 5610 (ics-moxabox-01)} 
-  	& \multicolumn{2}{c|}{\cellcolor{gray!20}\bfseries\sffamily IFC1211} \\
+  	& \multicolumn{2}{c|}{\cellcolor{gray!30}\bfseries\sffamily Moxa NPort 5610 (ics-moxabox-01)} 
+  	& \multicolumn{2}{c|}{\cellcolor{gray!30}\bfseries\sffamily IFC1211} \\
   	\hline
-  	\cellcolor{gray!20}{\bfseries\sffamily Pin n$^{\circ}$}
+  	\cellcolor{gray!30}{\bfseries\sffamily Pin n$^{\circ}$}
   	& Color
   	& Description
   	& Color
   	& Description \\
   	\hline
   	1 & white/orange stripe & DSR (in)     & green solid                                 & Not used (DCD) \\
-  	\hline\rowcolor{LightCyan}
+  	\hline\rowcolor{gray!10}%\rowcolor{LightCyan}
   	2 & orange solid        & RTS (out)    & orange solid                                & RTS            \\
   	\hline
   	3 & white/green stripe  & GND          & white/green stripe                          & GNDC           \\
-  	\hline\rowcolor{LightCyan}
+  	\hline\rowcolor{gray!10}%\rowcolor{LightCyan}
   	4 & blue solid          & TxD (out)    & white/blue stripe                           & TXD            \\
   	\hline
   	5 & white/blue stripe   & RxD (in)     & blue solid                                  & RXD            \\
-  	\hline\rowcolor{LightCyan}
-  	\multirow{2}{*}{6} & \multirow{2}{*}{green solid} & \multirow{2}{*}{DCD (in)} & none (do not connect & \multirow{2}{*}{GNDC} \\
-  	\rowcolor{LightCyan}
+  	\hline\rowcolor{gray!10}%\rowcolor{LightCyan}
+\iffalse
+  	\multirow{2}{*}{6} & \multicolumn{1}{c|}{\multirow{2}{*}{green solid}} & \multicolumn{1}{c|}{\multirow{2}{*}{DCD (in)}} & \multicolumn{1}{c|}{none (do not connect} & \multicolumn{1}{c|}{\multirow{2}{*}{GNDC}} \\
+\fi
+    6 & green solid & DCD (in) & none (do not connect & GNDC \\
+  	\rowcolor{gray!10}%\rowcolor{LightCyan}
   	&&&to white/orange cable)&\\
   	\hline
   	7 & white/brown stripe  & CTS (in)     & white/brown stripe                          & CTS            \\
-  	\hline\rowcolor{LightCyan}
+  	\hline\rowcolor{gray!10}%\rowcolor{LightCyan}
   	8 & brown solid         & DTR (out)    & brown solid                                 & Not used (DTR) \\
   	\hline
 \iffalse
@@ -268,24 +330,24 @@ Figure~\ref{fig:ser_cable} shows the usual cable enumeration and Table~\ref{tabl
 \label{table:ser_cable_tab}
 \end{table}
 
-The white/orange stripe cable is not routed to any pin on the IFC1211 side and is actually left dangling, in addition one of the GND pins is not connected but so far no problem was detected related to this.
+The white and orange stripes cable is not routed to any pin on the IFC1211 side and is actually left dangling, in addition one of the GND pins is not connected but so far no problem was detected related to this.
 
 
 \clearpage
 \section{Software}
-Table~\ref{table:swlist} shows the Software list and its environment. It is not necessary to have the same Linux OS or the same kernel version to be able to boot the IFC1211 board, but there might be a few differences in terms of the configuration and installation procedure of the different services.
+Table~\ref{table:swlist} shows the list of software and services required. It is not necessary to have the same TFTP or NFS server versions to be able to boot the IFC1211 board, but there might be a few differences in terms of their configuration.
 \begin{table}[!htb]
   \centering
   \begin{tabular}{l|l}
-    \toprule
+    \toprule\rowcolor{gray!15}
     Item                      & Version and Info.                                               \\\midrule
 \iffalse
     CentOS Linux              & \texttt{7.1.1503}                                               \\\midrule
     Kernel                    & \texttt{3.10.0-229.7.2.rt56.141.6.el7.centos.x86\_64}           \\\midrule
-    TFTP server               & version : \texttt{1} / srcversion                               \\\midrule
-    NFS server                & \texttt{1.8.0}                                                  \\\midrule
 \fi
-    ics-boot-01.esss.lu.se    & boot machine with TFTP and NFS servers and cross-compiler chain \\\midrule
+    TFTP server               & \texttt{tftp-hpa 5.2, with readline}                            \\\midrule
+    NFS server                & version 3 required                                              \\\midrule
+%    ics-boot-01.esss.lu.se    & boot machine with TFTP and NFS servers and cross-compiler chain \\\midrule
     uImage\_2080              & currently version \texttt{3.12}                                 \\\midrule
     t2080ifc.dtb              & N.A.                                                            \\\midrule
     root file system .tar.gz  & fsl-image-full-t2080rdb-64b.tar.gz                              \\\bottomrule
@@ -294,17 +356,19 @@ Table~\ref{table:swlist} shows the Software list and its environment. It is not 
   \label{table:swlist}
 \end{table}
 
-The file uImage\_2080 is a Linux kernel image binary file with the U-boot boot-loader wrapper. The t2080ifc.dtb is a device tree binary file that provides informations about the available devices, their access address and the compatible drivers.
+The file uImage\_2080 is a Linux kernel image binary file with the U-boot boot-loader wrapper. The t2080ifc.dtb is the device-tree binary file that provides informations about the available devices, their access address and the compatible drivers.
+The root file system is provided as a tarball and needs to be uncompressed before it can be used, further instructions are provided later on.
 An additional file named u-boot-t2080.bin might be available, this file contains the U-boot boot-loader image which should already be loaded into the flash memory of the board and as such it is not required for the tasks described in this document. If the boot-loader is not already installed or if it needs to be updated please refer to the relevant documentation.
+Both TFTP and NFS services are provided by the \texttt{ics-boot-01.esss.lu.se} server located in the ICS lab.
 
 
 \clearpage
 \chapter{Engineering Procedure}
 \iffalse
-This chapter provides the minimal information necessary to configure the TFTP and NFS servers, modify the U-boot environment to allow it to load a script and create such a compiled script file. 
+This chapter provides the minimal information necessary to configure the TFTP and NFS servers, modify the U-boot environment to allow it to load a script and to create such a compiled script file. 
 \fi
-This chapter provides the informations necessary to boot the IFC1211 board. The modifications required on the U-boot environment to automatically load a script will be described and the steps necessary to compile such a script file will be covered.
-All the procedures described require to have access to the \texttt{ics-boot-01.esss.lu.se} machine, available in the ics-lab network.
+This chapter provides the informations necessary to boot the IFC1211 board. The modifications required to the U-boot environment in order to automatically load a script will be described together with the steps necessary to compile such a script.
+All the procedures will assume that the user have access to the \texttt{ics-boot-01.esss.lu.se} machine, available in the ics-lab network.
 
 
 \iffalse
@@ -445,21 +509,12 @@ It might be useful to take a look at the default environment settings of a syste
 
 Figure~\ref{fig:ser_ifc_con} shows the location of the serial interface on the IFC1211 board.
 
-\begin{figure}[!htb]
-	\centering
-	\includegraphics[width=0.80\textwidth]{./pictures/ser_ifc_con.eps}
-	\caption{
-		Serial interface location on the IFC1211.
-	}
-	\label{fig:ser_ifc_con}   
-\end{figure}
-
 Configure an available MoxaBox port according to the following values:
 
 \begin{table}[!htb]
 	\centering
 	\begin{tabular}{l|l}
-		\toprule
+		\toprule\rowcolor{gray!15}
 		Parameter          & Value                        \\\midrule
 		Baud rate          & 155200                       \\\midrule
 		Data bits          & 8                            \\\midrule
@@ -469,13 +524,13 @@ Configure an available MoxaBox port according to the following values:
 		FIFO               & Enable                       \\\midrule
 		Interface          & RS-232 Only                  \\\bottomrule
 	\end{tabular}
-	\caption[]{Software and its version information.}
-	\label{table:swlist}
+	\caption[]{MoxaBox port configuration}
+	\label{table:moxa_serial}
 \end{table}
 
-To do so open a web browser and access the \texttt{http://10.4.3.90/}, under "Serial Settings" choose the appropriate port number and modify the values to reflect the IFC1211 serial settings previosly described.
+To do so open a web browser and access the \texttt{http://10.4.3.90/}, under ``Serial Settings'' choose the appropriate port number and modify the values to reflect the IFC1211 settings previosly described.
 Connect the appropriate end of the Ethernet cable to the IFC1211 and to the configured port on the MoxaBox.
-The driver required to interface to the MoxaBox are already installed in the \texttt{ics-workstation (10.4.3.18)}, if you need to setup the communication to this device on your pc the relevant informations are described in the ESS wiki in the \cite{ASDLL} document.
+The driver required to interface to the MoxaBox is already installed on the \texttt{ics-workstation (10.4.3.18)}, if you need to setup the communication to this device on your pc the relevant informations are described in the ESS wiki in the ``How To Setup Serial Communication to Moxa NPort 5610 on Your Machine'' section of the \cite{ASDLL} document.
 To communicate with the serial interface of the device ssh into the \texttt{ics-workstation} and use the picocom tool, remember that the port enumeration in Linux starts from 0 so the \texttt{ttyr} number is the port number written on the MoxaBox chassis minus one.
 \begin{lstlisting}[style=termstyle]
 [srvr-machine@localhost ~]$ picocom -b 115200 /dev/ttyr1
@@ -548,13 +603,13 @@ Environment size: 1702/8188 bytes
 => 
 \end{lstlisting}
 
-This default environment does not allow the load of a boot script at startup, in order to do so we need to modify it. The following sections will describe how to do that but first let focus on the script itself.
+This default environment does not allow the user to load a U-boot script at startup, in order to be able to do so the user needs to modify it. The following sections will describe how to configure the boot loader to load a script file but before that the procedure to create the script itself will be covered.
 
 
 \subsection{U-boot Script Creation and Compilation}
 The U-boot script is just a plain text file that will afterwards be compiled in order to be recognized by the boot loader, as such it can be created using any text editor and does not need to have any specific file extension.
 To avoid any misunderstanding we will append the extension .scr on the compiled script and .script on the regular text file.
-The script can contain any command that could also be issued in the boot loader shell, to view the list available commands enter \texttt{?} in the shell.
+The script can contain any command that could also be issued in the boot loader shell, to view the list available commands enter \texttt{help} or \texttt{?} in the shell.
 
 \begin{lstlisting}[style=termstyle]
 =>
@@ -661,7 +716,7 @@ In addition the following FPGA bitstream files can be loaded at startup and shou
 	\item central.bit, the CENTRAL FPGA bitstream configuration file.
 \end{itemize}
 These files need to be copied to the export directory of any available server providing TFTP and NFS functionalities.
-The \texttt{ics-boot-01.esss.lu.se} machine provides all these services, its export directory is \texttt{/export} and its organization is as follows
+The \texttt{ics-boot-01.esss.lu.se} machine provides all these services, its export directory is \texttt{/export} and its directory structure is as follows
 \begin{lstlisting}[style=termstyle]
 [username@ics-boot-01 export]$ tree -d -L 2
 .
@@ -697,14 +752,11 @@ The \texttt{ics-boot-01.esss.lu.se} machine provides all these services, its exp
 └── ioc
 \end{lstlisting}
 
-To keep the files organized copy the uImage\_2080 and t2080ifc.dtb into the \texttt{images/ifc1211-default} folder and untar the root file system into the \texttt{nfsroots/ifc1211}.
+To keep the files organized copy the \texttt{uImage\_2080} and \texttt{t2080ifc.dtb} files into the \texttt{images/ifc1211-default} folder and untar the root file system in \texttt{nfsroots/ifc1211}.
 Copy the io.bit and central.bit files to the \texttt{images/ifc1211-default} folder if they are available.
 We are now ready to define the content of the U-boot script which should be as follows:
 
-\begin{lstlisting}[style=termstyle]
-[srvr-machine@localhost ~]$ touch uboot_ifc1211.script
-[srvr-machine@localhost ~]$ vi uboot_ifc1211.script
-
+\begin{lstlisting}[style=texteditor]
 setenv fpgaIO /images/ifc1211-default/io.bit
 setenv fpgaCE /images/ifc1211-default/central.bit
 setenv bootfile images/ifc1211-default/uImage_2080
@@ -725,14 +777,6 @@ setenv nfsboot 'setenv bootargs $bootargs;tftp $loadaddr $bootfile;tftp $fdtaddr
 setenv loadIO 'tftp $loadaddr $fpgaIO;fpga load io $loadaddr'
 setenv loadCE 'tftp $loadaddr $fpgaCE;fpga load central $loadaddr'
 setenv fpgaload 'run loadIO; run loadCE; fpga reset 11b01'
-~                                                                                                                                        
-~                                                                                                                                        
-~                                                                                                                                        
-~                                                                                                                                        
-~                                                                                                                                        
-~                                                                                                                                      
--- INSERT --                                                                                                           2,50          All
-
 \end{lstlisting}
 
 The first two lines and the last three are optional and should be included only if the bitstream files have been provided.
@@ -742,21 +786,24 @@ This file will not be recognized by U-boot unless we translate it to a proper sc
 [username@ics-boot-01 ~]$ /home/shared/SVN/Software/IOxOS/u-boot/setenv/mkimage -T script -C none -n 'Boot Script' -d uboot_ifc1211.script uboot_ifc1211.scr
 \end{lstlisting}
 
-If the mkimage executable is not available in the location shown above a way to find it is by running the following command.
+where \texttt{\_ifc1211} is supposed to be the name of text file created in the previous step and also the desired name for the compiled script.
+
+If the mkimage executable is not available in the location shown above a way to find it is to run the following command.
 
 \begin{lstlisting}[style=termstyle]
 [username@ics-boot-01 ~]$ find / ! -readable -prune -o -path *u-boot* -name mkimage -print
 \end{lstlisting}
 
-This will display all available files named \texttt{mkimage} that are located in a folder with \texttt{u-boot} in his path.
+This will display all available files named \texttt{mkimage} that are located in a folder with \texttt{u-boot} in its path.
 
 The generated \texttt{.scr} file has to be copied in the \texttt{/export} folder in order to be retrieved by U-boot using the TFTP service, in the remainder of the document it will be assumed that this file has been copied in \texttt{/export/boot}.
 
 
 
 \subsection{U-boot environment setup to load script}
-The generated script is now ready to be retrieved and loaded from the server by the bootloader but it has to be instructed to do so and to accomplish this the default Environment has to be modified.
-Connect to the IFC1211 board serial interface as described previously and type the following two commands:
+The generated script is now ready to be retrieved and loaded from the server.
+The user must instruct U-boot to load the file and this is done by modifying the default Environment.
+Connect to the IFC1211 board serial interface, as described previously, and type the following commands:
 
 \begin{lstlisting}[style=termstyle]
 [srvr-machine@localhost ~]$ picocom -b 115200 /dev/ttyr8
@@ -800,11 +847,11 @@ The \texttt{envload} instruction translates to the following list of actions:
 		\item run the instruction called \texttt{fpgaload};
 		\item run the instruction called \texttt{nfsboot};
 	\end{itemize}
-	\item otherwise if none of the previous two conditions apply do nothing
+	\item otherwise if none of the previous two conditions apply do nothing.
 \end{itemize}
 
 The \texttt{\$loadaddr} variable is defined in the default U-boot environment and translates to a memory address.
-The \texttt{env-\$eth1addr.scr} is introduced to reflect what the default naming scheme will look like when deploying the boards in the facility and translates to a file name that includes the MAC address of the interface \texttt{eth1}, in this way any script file will be associated only to a single board.
+The \texttt{env-\$eth1addr.scr} is introduced to reflect what the default naming scheme will look like when deploying the boards in the facility and translates to a file name that includes the MAC address of the network interface \texttt{eth1}, in this way any script file will be associated only to a board.
 If the bitstream files are not available the instruction \texttt{\&\& run fpgaload} shall be removed from the previous command.
 The IFC1211 can now be booted up by issuing the \texttt{boot} command in the U-boot shell at every startup, to avoid the necessity to interact with the board every time it resets or power cycles the following additional modification can be made to the environment: 
 
