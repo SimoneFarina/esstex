@@ -239,6 +239,7 @@ Their position should be set as follows:
 \subsection{Serial Connection: Pinout and Cable Wiring}
 In order to access the boot-loader shell the user shall have access to the serial interface.   
 The Serial link to the IFC1211 T2081 processor is routed through a standard RJ45 connector (see \cite{IFC1211_HW_TUG} sections 2.1.2 and 2.6.7) so the user shall take care of creating a cable that matches the board pinout to his equipment.
+
 The ICS group uses a Moxa serial device server\cite{MBUM} to access RS232 interfaces but there is no off-the-shelf cable that matches its pinout to that of the IFC1211 board so the user must create his own cable according to the following instructions.
 
 Figure~\ref{fig:ser_cable} shows the usual cable enumeration and Table~\ref{table:ser_cable_tab} shows the required connections at both ends assuming that the cable end at the Moxa NPort device follows the T568B coloring scheme shown.
@@ -555,7 +556,7 @@ It might be useful to take a look at the default environment settings of a syste
 
 Figure~\ref{fig:ser_ifc_con} shows the location of the serial interface on the IFC1211 board.
 
-The user must configure an available serial device port according to the values in Table~\ref{moxa_serial}.
+The user must configure an available serial device port according to the values in Table~\ref{table:moxa_serial}.
 
 \begin{table}[!htb]
 	\centering
@@ -574,13 +575,18 @@ The user must configure an available serial device port according to the values 
 	\label{table:moxa_serial}
 \end{table}
 
-\subsubsection{Moxa Serial Device Configuration}
-The user at ICS can setup this connection using the Moxa Serial Device Server (Hostname : \texttt{ics-moxabox-01} in the ics-lab network) and the cable previously defined in this document.
+There are many options available to connect to a serial device depending on the hardware available, for example the PC could provide a serial interface or the user can purchase a serial to USB converter. In any case a cable should be available to interface between the two components and the IFC1211 end connection should match the one described in Table~\ref{table:ser_cable_tab}.
 
-To do so open a web browser and access the \texttt{http://10.4.3.90/}, in ``Serial Settings'' choose the port number amongst the set of available ones and modify the values to reflect the IFC1211 settings previosly described then connect the appropriate end of the Ethernet cable to the IFC1211 and to the configured port on the Moxa Serial Device Server.
-The user can access the serial device in many different ways that are be selected in the ``Operating Settings'' section for every port. The common settings are:
+The following subsection will cover the configuration used at ICS.
+
+\subsubsection{Moxa Serial Device Configuration}
+The user at ICS can setup a serial connection to the IFC1211 board using the Moxa Serial Device Server (Hostname : \texttt{ics-moxabox-01} in the ics-lab network) and the cable previously defined in this document.
+
+To configure such a connection the user should open a web browser and access the Moxa configuration web page (\texttt{http://10.4.3.90/}), in the ``Serial Settings'' men\`u an available port number amongst the set of available ones should be selected and its settings shall be modified to reflect the values previously described. When the device is properly configured the appropriate end of the Ethernet cable can be connected to the IFC1211 and to the selected Moxa Serial Device Server port.
+
+It is possible to access the serial device in many different ways, all of which are selected from the ``Operating Settings'' section of every port. The most common settings are:
 \begin{itemize}
-\item Real COM Mode
+\item \textbf{Real COM Mode:}
 The driver required to interface to the MoxaBox is already installed on the \texttt{ics-workstation (10.4.3.18)}, if you need to setup the communication to this device on your pc the relevant informations are described in the ESS wiki in the section ``How To Setup Serial Communication to Moxa NPort 5610 on Your Machine'' of the ``Accessing Serial Devices Located in the Lab''\cite{ASDLL} document.
 To communicate with the serial interface of the device the user shall \texttt{ssh} into the \texttt{ics-workstation} and use a terminal emulation program like the picocom tool. Port enumeration in Linux starts from 0 so the \texttt{ttyr} number to connect to is the port number written on the Moxa chassis minus one.
 \begin{lstlisting}[style=termstyle]
@@ -588,7 +594,7 @@ To communicate with the serial interface of the device the user shall \texttt{ss
 \end{lstlisting}
 The \texttt{-b} option allows to specify the baudrate of the connection if it needs be.
 
-\item TCP Server Mode
+\item \textbf{TCP Server Mode:}
 Allows the user to connect to the device using a telnet client connecting to the Moxa IP address and to the port number specified in the Local TCP Port field.
 \end{itemize}
 
@@ -658,7 +664,7 @@ Environment size: 1648/8188 bytes
 => 
 \end{lstlisting}
 
-This default environment does not allow the user to load a U-boot script at startup, in order to be able to do so the user needs to modify it. The following sections will describe how to configure the boot loader to load a script file but before that we will show the procedure to create the script itself.
+Currently the default environment that can be found on any pristine board does not allow the user to load a U-boot script at startup, in order to be able to load one the user needs to modify it. The next section will show how to create the script file and the following one will describe how to configure the boot loader to load a script file.
 
 
 \subsection{U-boot Script Creation and Compilation}
@@ -679,6 +685,38 @@ bootm   - boot application image from memory
 bootp   - boot image via network using BOOTP/TFTP protocol
 bootvx  - Boot vxWorks from an ELF image
 chpart  - change active partition
+
+...(omissis)...
+
+nfs     - boot image via network using NFS protocol
+nm      - memory modify (constant address)
+pci     - list and access PCI Configuration Space
+ping    - send ICMP ECHO_REQUEST to network host
+printenv- print environment variables
+prom    - PROM handling
+protect - enable or disable FLASH write protection
+reginfo - print register information
+reset   - Perform RESET of the CPU
+run     - run commands in an environment variable
+sata    - SATA sub system
+saveenv - save environment variables to persistent storage
+setenv  - set environment variables
+setexpr - set environment variable as the result of eval expression
+sf      - SPI flash sub-system
+showvar - print local hushshell variables
+sleep   - delay execution for some time
+source  - run script from memory
+test    - minimal test like /bin/sh
+tftpboot- boot image via network using TFTP protocol
+true    - do nothing, successfully
+usb     - USB sub-system
+usbboot - boot from USB device
+vdd_override- override VDD
+vdd_read- read VDD
+version - print monitor, compiler and linker version
+=>
+\end{lstlisting}
+\iffalse
 cmp     - memory compare
 conf    - Board configuration
 coninfo - print console devices and information
@@ -729,34 +767,7 @@ mtest   - simple RAM read/write test
 mw      - memory write (fill)
 nand    - NAND sub-system
 nboot   - boot from NAND device
-nfs     - boot image via network using NFS protocol
-nm      - memory modify (constant address)
-pci     - list and access PCI Configuration Space
-ping    - send ICMP ECHO_REQUEST to network host
-printenv- print environment variables
-prom    - PROM handling
-protect - enable or disable FLASH write protection
-reginfo - print register information
-reset   - Perform RESET of the CPU
-run     - run commands in an environment variable
-sata    - SATA sub system
-saveenv - save environment variables to persistent storage
-setenv  - set environment variables
-setexpr - set environment variable as the result of eval expression
-sf      - SPI flash sub-system
-showvar - print local hushshell variables
-sleep   - delay execution for some time
-source  - run script from memory
-test    - minimal test like /bin/sh
-tftpboot- boot image via network using TFTP protocol
-true    - do nothing, successfully
-usb     - USB sub-system
-usbboot - boot from USB device
-vdd_override- override VDD
-vdd_read- read VDD
-version - print monitor, compiler and linker version
-=>
-\end{lstlisting}
+\fi
 
 In order to be able to boot up the IFC1211 we need to define its network settings, specify the necessary files locations and also provide some basic boot arguments.
 The files required, as previously defined, are:
