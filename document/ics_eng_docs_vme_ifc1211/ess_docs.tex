@@ -91,7 +91,7 @@
 
 %%% Actual Document Start at below
 \chapter{Overview}
-At European Spallation Source (ESS), the Integrated Control System (ICS) group uses the IOxOS IFC1211 VME card{\footnote{\url{http://www.ioxos.ch/images/pdf/02_press_release/VME\%203rd\%20Generation.pdf}}} to implement EPICS IOCs that will later on be ported to the uTCA boards IFC1410 \& IFC1420 that have similar hardware architectures and the same main components.
+At European Spallation Source (ESS), the Integrated Control System (ICS) group uses the IOxOS IFC1211 VME card{\footnote{\url{http://www.ioxos.ch/images/pdf/02_press_release/VME\%203rd\%20Generation.pdf}}} to implement EPICS IOCs that will later on be ported to the uTCA boards IFC1410 \& IFC1420 that share similar hardware architectures and almost same main components.
 
 \section{Scope}
 \begin{itemize}
@@ -163,7 +163,7 @@ The differential connections of both the FMCs are routed to the Xilinx Ultrascal
 \clearpage
 
 \chapter{System Environment}
-Before describing the engineering procedure necessary to boot up the IFC1211 VME board, it is necessary to have the following list of hardware and software components. Here we will show the hardware and software requirements and how to access the infrastructure already available in the ICS lab at ESS. Additional informations on such infrastructure can be found in the following ESS wiki documents:
+Before describing the engineering procedure necessary to boot up the IFC1211 VME board, it is necessary to have the following list of hardware and software components. This chapter will cover the hardware and software requirements and will explain how to access the infrastructure already available in the ICS lab at ESS. Additional informations on such infrastructure can be found in the following ESS wiki documents:
 \begin{itemize}
 	\item  General description\cite{GDLI};
 	\item  How to setup lab infrastructure\cite{SULI};
@@ -177,7 +177,7 @@ Table~\ref{table:hwlist} shows the list of hardware necessary to boot up the boa
 	\centering
 	\begin{tabular}{l|l}
 		\toprule
-		Hardware                  & Info                             \\\midrule
+		\bfseries{Hardware}       & \bfseries{Info}                  \\\midrule
 		IFC1211                   & IOxOS VME64x board               \\\midrule
 		VME Crate                 & 6U size B capable crate          \\\midrule
 		Serial interface          &                                  \\\midrule
@@ -405,8 +405,9 @@ Currently at ICS both the TFTP and NFS services are provided by the \texttt{ics-
 	\caption[]{Software and its version information.}
 	\label{table:swlist_ics}
 \end{table}
+
 The files required to boot up the IFC1211 are the same as described in the previous section.
-The procedure to set up a machine with the same characteristics as defined in Table~\ref{swlist_ics} can be found in \cite{SULI} and \cite{SETUP_LAB_INFRASTRUCTURE}.
+The procedure to set up a machine with the same characteristics as defined in Table~\ref{table:swlist_ics} can be found in \cite{SULI} and \cite{SETUP_LAB_INFRASTRUCTURE}.
 \clearpage
 
 
@@ -670,7 +671,7 @@ Currently the default environment that can be found on any pristine board does n
 \subsection{U-boot Script Creation and Compilation}
 The U-boot script is just a plain text file that will afterwards be compiled in order to be recognized by the boot loader, as such it can be created using any text editor and does not need to have any specific file extension.
 To avoid any misunderstanding we will append the extension .scr on the compiled script and .script on the regular text file.
-The script can contain any command that could also be issued in the boot loader shell, to view the list of available commands enter \texttt{help} or \texttt{?} in the shell.
+The script can contain any command that could also be issued from the boot loader shell, to view the list of available commands type either \texttt{help} or \texttt{?}.
 
 \begin{lstlisting}[style=termstyle]
 =>
@@ -776,13 +777,17 @@ The files required, as previously defined, are:
 	\item t2080ifc.dtb, the compiled device tree binary;
 	\item fsl-image-full-t2080rdb-64b.tar.gz, the root file system structure (this file needs to be extracted).
 \end{itemize}
+At the time of this document these files are provided by IOxOS/PSI.
 In addition the following FPGA bitstream files can be loaded at startup and should be also provided:
 \begin{itemize}
 	\item io.bit, the IO FPGA bitstream configuration file;
 	\item central.bit, the CENTRAL FPGA bitstream configuration file.
 \end{itemize}
-These files need to be copied into the export directory of an available server providing TFTP and NFS functionalities.
-The \texttt{ics-boot-01.esss.lu.se} machine provides the required services, its export folder is \texttt{/export} and its directory structure is as follows
+At the time of this document these files are not yet available.
+
+All of these files need to be copied into the export directory of an available server providing TFTP and NFS functionalities, it is not necessary to create a folder structure identical to the one available at ICS but the user must take care of changing all the paths in the scripts and in the U-boot environment to match his own configuration. The following sections will assume that the server has the same directory structure as described hereafter.
+
+In the ICS lab the \texttt{ics-boot-01.esss.lu.se} machine provides all the required services, its export folder is \texttt{/export} and its directory structure is as follows
 \begin{lstlisting}[style=termstyle]
 [username@ics-boot-01 export]$ tree -d -L 2
 .
@@ -818,8 +823,9 @@ The \texttt{ics-boot-01.esss.lu.se} machine provides the required services, its 
 └── ioc
 \end{lstlisting}
 
-To keep the files organized copy the \texttt{uImage\_2080} and \texttt{t2080ifc.dtb} files into the \texttt{images/ifc1211-default} folder and untar the root file system in \texttt{nfsroots/ifc1211}.
-Copy the io.bit and central.bit files to the \texttt{images/ifc1211-default} folder if they are available.
+In order to keep the files organized create a folder named \texttt{ifc1211-default} in the \texttt{/export/images} directory and copy the \texttt{uImage\_2080} and \texttt{t2080ifc.dtb} files into it, then create a folder called \texttt{ifc1211} into \texttt{/export/nfsroots} and untar the root file system into it.
+If the user has the io.bit and central.bit files available he should copy them to the same folder of the kernel image and the device tree (\texttt{/export/images/ifc1211-default}).
+
 We are now ready to define the content of the U-boot script which should be as follows:
 
 \begin{lstlisting}[style=texteditor]
@@ -846,15 +852,16 @@ setenv fpgaload 'run loadIO; run loadCE; fpga reset 11b01'
 \end{lstlisting}
 
 The first two and the last three lines are optional and should be included only if the bitstream files have been provided.
-This file will not be recognized by U-boot unless we translate it to a proper script, in order to do this copy it to any folder in the \texttt{ics-boot-01.esss.lu.se} machine where the user has writing privileges, here it is assumed to be the user home directory, and issue the following command:
+The ethernet related variables (\texttt{serverip}, \texttt{ipaddr}, \texttt{gatewayip} and \texttt{netmask}) should be set to proper values according to the network configuration and IP availability. 
+This file will not be recognized by U-boot unless we translate it into a proper script, in order to do so copy it to a folder in the \texttt{ics-boot-01.esss.lu.se} machine where the user has writing privileges, here it is assumed to be the user home directory, and issue the following command:
 
 \begin{lstlisting}[style=termstyle]
-[username@ics-boot-01 ~]$ /home/shared/SVN/Software/IOxOS/u-boot/setenv/mkimage -T script -C none -n 'Boot Script' -d uboot_ifc1211.script uboot_ifc1211.scr
+[username@ics-boot-01 ~]$ /home/shared/SVN/Software/IOxOS/u-boot/setenv/mkimage -T script -C none -n 'Boot Script' -d uboot_ifc1211_text.script uboot_ifc1211.scr
 \end{lstlisting}
 
-where \texttt{uboot\_ifc1211} is supposed to be the name of text file created in the previous step and also the desired name for the compiled script.
+where \texttt{uboot\_ifc1211\_text} is supposed to be the name of text file created in the previous step and \texttt{uboot\_ifc1211} is the desired name for the compiled script.
 
-If the mkimage executable is not available in the location shown above a way to find it is to run the following command.
+If the \texttt{mkimage} executable is not available in the location shown above a way to find it is to run the following command.
 
 \begin{lstlisting}[style=termstyle]
 [username@ics-boot-01 ~]$ find / ! -readable -prune -o -path *u-boot* -name mkimage -print
@@ -872,6 +879,9 @@ The user must instruct U-boot to load the file and this is done by modifying the
 There are two different procedures available depending if the system relies on a DHCP server to acquire the network informations or not.
 
 \subsubsection{Procedure without DHCP}
+When the system does not rely on DHCP service to gain network informations all of the \texttt{serverip}, \texttt{ipaddr}, \texttt{gatewayip} and \texttt{netmask} have to be provided by the user in order to boot up the board properly.
+These values need to be set according to the network setup and IP availability, in the following section the proper values for the ICS lab network are provided. The \texttt{ipaddr} can be changed to any available value and the list of IP addresses currently in use can be found in \cite{ICSNA}.
+
 Connect to the IFC1211 board serial interface, as described previously, and type the following commands:
 
 \begin{lstlisting}[style=termstyle]
@@ -905,8 +915,8 @@ Terminal ready
 => setenv envload 'if tftp $loadaddr $serverip:boot/env-$eth0addr.scr; then source $loadaddr && run fpgaload && run nfsboot; elif tftp $loadaddr $serverip:boot/uboot_ifc1211.scr; then source $loadaddr && run fpgaload && run nfsboot; else false; fi'
 => saveenv
 \end{lstlisting}
-
-When the system does not rely on DHCP service to gain network informations all of the \texttt{serverip}, \texttt{ipaddr}, \texttt{gatewayip} and \texttt{netmask} have to be provided by the user in order to have the board boot up properly, the next section describes the procedure to boot the board using the configuration provided by DHCP.
+ 
+The next section describes the procedure to boot the board using the configuration provided by a DHCP server.
 
 \subsubsection{Procedure with DHCP}
 Connect to the IFC1211 board serial interface, as described previously, and type the following commands:
@@ -940,7 +950,7 @@ Terminal ready
 \end{lstlisting}
 
 The user still needs to specify the Ethernet interface that is connected to the LAN, here is the \texttt{eth0} device.
-In order for this setting to work properly an additional modification has to be made on the script itself, the \texttt{bootargs} must be modified to look like this
+If the same settings provided by the DHCP server should be retained by the board after boot up an additional modification has to be made on the script itself, the \texttt{bootargs} must be modified to look like this
 \begin{lstlisting}[style=texteditor]
 setenv bootargs root=/dev/nfs nfsroot=$serverip:$rootpath,$nfsver ip=dhcp console=$consoledev,$baudrate $othbootargs ramdisk=60000 pci_scan_all pci=realloc
 \end{lstlisting}
@@ -963,11 +973,12 @@ The \texttt{envload} instruction translates to the following list of actions:
 		\item run the instruction called \texttt{fpgaload};
 		\item run the instruction called \texttt{nfsboot};
 	\end{itemize}
-	\item otherwise if none of the previous two conditions apply do nothing.
+	\item otherwise if none of the previous two conditions apply U-boot will stop the boot procedure and will wait for the user to provide instructions via the serial interface.
 \end{itemize}
 
 The \texttt{\$loadaddr} variable is defined in the default U-boot environment and translates to a memory address.
-The \texttt{env-\$eth0addr.scr} is introduced to reflect what the default naming scheme will look like when deploying the boards in the facility and translates to a file name that includes the MAC address of the network interface \texttt{eth0}, in this way any script file will be associated only to a board.
+The \texttt{env-\$eth0addr.scr} is introduced to reflect a possible approach for a default naming scheme and translates to a file name that includes the MAC address of the network interface \texttt{eth0}, in this way every script file will be associated to a single board.
+
 If the bitstream files are not available the instruction \texttt{\&\& run fpgaload} shall be removed from the previous command.
 The IFC1211 can now be booted up by issuing the \texttt{boot} command in the U-boot shell at every startup, to avoid the necessity to interact with the board every time it resets or power cycles the following additional modification can be made to the environment: 
 
@@ -997,7 +1008,7 @@ Terminal ready
 => saveenv
 \end{lstlisting}
 
-This will make U-boot wait for 5 second at every startup to see if the user wants to stop the booting procedure otherwise it will run the boot command.
+This will make U-boot wait for 5 seconds at every startup to see if the user wants to stop the booting procedure otherwise it will run the boot command.
 
 
 
