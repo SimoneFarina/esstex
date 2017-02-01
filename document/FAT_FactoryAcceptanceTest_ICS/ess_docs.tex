@@ -36,49 +36,120 @@
 
 
 
+%\def\eesarrayvarname#1{\def\@eesarrayvarname{#1}}
 
-\newcounter{cnt}
+
+
+%% Definition of functions for mono dimensional array
+\newcounter{cntmo}
 \newcommand\itemlist{}
 \newcommand\setitem[2]{%
 	\csdef{item#1}{#2}}
 \newcommand\additem[1]{%
-	\stepcounter{cnt}%
-	\csdef{item\thecnt}{#1}}
+	\stepcounter{cntmo}%
+	\csdef{item\thecntmo}{#1}}
 \newcommand\getitem[1]{%
 	\csuse{item#1}}
 
 
+%% Definition of functions for mono dimensional array of a structure of three variables
+\newcounter{cntbi}
+\newcounter{cntbirone}
+%\newcounter{cntbirtwo}
+%\newcounter{cntbirthr}
+\newcommand\itemvslist{}
+\newcommand\setitemvs[4]{%
+	\newcommand{\eesarrayvarname}[0]{#1}	
+	\setcounter{cntbirone}{0}
+	\csdef{itemvs-\eesarrayvarname-\thecntbirone}{#2}
+	\stepcounter{cntbirone}
+	\csdef{itemvs-\eesarrayvarname-\thecntbirone}{#3}
+	\stepcounter{cntbirone}
+	\csdef{itemvs-\eesarrayvarname-\thecntbirone}{#4}}
+\newcommand\getitemvs[2]{%
+	\csuse{itemvs-#1-#2}}
+
+
+%% Definition of functions for mono dimensional array of a structure of three variables (where the first one is the name and the
+%% content of the first argument of the array as well), an optional variable is accepted and if present treats the previous
+%% one as an www address
+\newcounter{cntbir}
+\newcounter{cntbirrone}
+\newcounter{cntbirrtwo}
+%\newcounter{cntbirthr}
+\newcommand\itemvsrlist{}
+\newcommand\setitemvsr[5]{%
+%	\newcommand{\eesarrayvarnamer}[0]{#1}	
+	\csdef{eesarrayvarnamer}{#1}
+	\stepcounter{cntbirrone}
+	\setcounter{cntbirrtwo}{0}
+	\csdef{itemvsr-\eesarrayvarnamer-\thecntbirrone-\thecntbirrtwo}{#2}
+	\stepcounter{cntbirrtwo}
+	\csdef{itemvsr-\eesarrayvarnamer-\thecntbirrone-\thecntbirrtwo}{#3}
+	\stepcounter{cntbirrtwo}
+	\csdef{itemvsr-\eesarrayvarnamer-\thecntbirrone-\thecntbirrtwo}{#4}
+	\stepcounter{cntbirrtwo}
+	\csdef{itemvsr-\eesarrayvarnamer-\thecntbirrone-\thecntbirrtwo}{#5}}
+\newcommand\getitemvsr[3]{%
+	\csuse{itemvsr-#1-#2-#3}}
+
+
+%% Sets up address inside variable
+\newcommand\addrwww[1]{%
+	\csdef{addr-#1}{\href{#1}{#1}}
+	\csuse{addr-#1}}
+
+
+%% Find TAG in inventory : requires 1 argument, the TAG to look for
+\newcounter{invtcnt}
+\newcommand\invfindtag[1]{%
+	\forloop[1]{invtcnt}{1}{\value{invtcnt} > 0}{%
+		\ifthenelse{\equal{#1}{\getitemvsr{inv}{\theinvtcnt}{1}}}{%
+			\scriptsize\getitemvsr{inv}{\theinvtcnt}{0} & \scriptsize\getitemvsr{inv}{\theinvtcnt}{1} & \scriptsize\getitemvsr{inv}{\theinvtcnt}{2}\\\hline
+			}{%
+			\ifthenelse{\equal{<EndOfDatabase>}{\getitemvsr{inv}{\theinvtcnt}{1}}}{%
+				\setcounter{invtcnt}{-1}}{%
+				}
+			}
+	}
+}
+
+
+%% Find TAGs in inventory : requires an array of arguments (of type 'item'), the TAGs to look for
+\newcounter{ntags}
+\newcommand\invfindtags[1]{%
+%	\newcounter{invtcnt}
+%	\ifthenelse{\equal{#1-ntags}{\getitemvsr{inv}{\theinvtcnt}{1}}}{
+%	}{
+%		\forloop[1]{invtcnt}{1}{\value{invtcnt} > 0}{
+%			\ifthenelse{\equal{#1}{\getitemvsr{inv}{\theinvtcnt}{1}}}{
+%				\scriptsize\getitemvsr{inv}{\theinvtcnt}{0} & \scriptsize\getitemvsr{inv}{\theinvtcnt}{1} & \scriptsize\getitemvsr{inv}{\theinvtcnt}{2} \\\hline }{
+%				\ifthenelse{\equal{<EndOfDatabase>}{\getitemvsr{inv}{\theinvtcnt}{1}}}{
+%					\setcounter{invtcnt}{-1}}{
+%				}
+%			}
+%		}
+%	}
+%}
+	\forloop[1]{ntags}{1}{\value{ntags} > 0}{%
+		\ifthenelse{\equal{\csuse{get#1}{\thentags}}{}}
+		{%
+			\setcounter{ntags}{-1}
+		}{%
+		\invfindtag{\csuse{get#1}{\thentags}}
+		}
+	}
+}
+
+
+%% Definition of a boolean variable for conditional compilation 
 \newif\ifESSproperty
 
 
 
-% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
-%<ESSBEGIN><Begin_of_User_Edit_Section>
-% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
-
-\newcommand{\ESSfattype}[0]{MTCA crate}
-\newcommand{\ESSitemid}[0]{<replace\_item\_name>}
-\newcommand{\ESSitemtag}[0]{<replace\_item\_tag>}
-\newcommand{\ESSitemsn}[0]{<replace\_item\_serial\_n$^o$>}
-\newcommand{\ESSitemvendoc}{<replace\_item\_vendor\_documentation>}
-\newcommand{\ESSoperator}[0]{<replace\_name\_person\_entitled\_to\_tests(role/title)>}
-\newcommand{\ESSqualitym}[0]{<replace\_name\_person\_entitled\_to\_quality(role/title)>}
-
-\newcommand{\ESScompanyproperty}[0]{European Spallation Source ERIC}
-
-\newcommand{\ESShcnum}[0]{10} %<replace\_number\_of\_additional\_components>
-
-
-\additem{MCH}
-
-
-%\ESSpropertytrue  %<Comment this section if the items do not belong to ESS>
-
-% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
-%<ESSEND><End_of_User_Edit_Section_(DO_NOT_MODIFY_BEYOND_THIS_SECTION)>
-% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
-
-
+%% Includes Document with imported variables
+\include{ess_variables}
+\include{ess_inventorytype_catalog}
 
 
 
@@ -148,16 +219,30 @@
 The Device Under Test (from now on simply referred by DUT) is a \ESSitemid \space \ESSfattype \space comprising the following components \ifESSproperty which are property of \ESScompanyproperty \fi :
 \newline
 \newcounter{hcnum}
+\newcounter{hcrownum}
 \begin{table}[!hb]
 	\centering
 	\begin{tabular}{l|l|l}\rowcolor{gray!10}
 		Name & ICS-TAG & Vendor Documentation \\\hline
-		\ESSitemid & \ESSitemtag & \ESSitemvendoc \\\hline
-		\forloop{hcnum}{1}{\value{hcnum} < \ESShcnum}{
- 		\getitem{1} & \getitem{1} & \getitem{1} \\\hline
-	    }
+		\scriptsize\ESSitemid & \scriptsize\ESSitemtag & \scriptsize\ESSitemvendoc \\\hline
+%		\forloop{hcnum}{1}{\value{hcnum} < \ESShcnum}{
+%		\invfindtag{\getitem{1}}
+%		\forloop[1]{hcnum}{1}{\value{hcnum} > 0}{%
+%			\ifthenelse{\equal{\getitem{\thehcnum}}{}}
+%			{%
+%				\setcounter{hcnum}{-1}
+%			}{%
+%			\invfindtag{\getitem{\thehcnum}}
+%			}
+%		}
+		\invfindtags{item}
 	\end{tabular}
 \end{table}
+	
+	
+	
+	
+	
 	
 \section{Scope}
 \begin{itemize}
