@@ -100,14 +100,29 @@
 	\csuse{addr-#1}}
 
 
+%% These Macros define different types of output tables for Macros \invfindtag and \invfindtags
+\newcommand\maketabhwlist[1]{%
+	\noindent\scriptsize\getitemvsr{inv}{#1}{0} & \scriptsize\getitemvsr{inv}{#1}{1} & \scriptsize\getitemvsr{inv}{#1}{2}\\\hline 
+}
+
+\newcommand\maketabhwvilist[1]{%
+	\noindent\scriptsize\getitemvsr{inv}{#1}{0} & \scriptsize\getitemvsr{inv}{#1}{1} & & \multicolumn{1}{c}{\checkbox} & & \multicolumn{1}{c}{\checkbox} \\
+}
+
+\newcommand\maketabhwftlist[1]{%
+	\maketabhwvilist{#1}
+}
+
+
 %% Find TAG in inventory : requires 1 argument, the TAG to look for
 \newcounter{invtcnt}
-\newcommand\invfindtag[1]{%
+\newcommand\invfindtag[2]{%
 	\forloop[1]{invtcnt}{1}{\value{invtcnt} > 0}{%
 		\ifthenelse{\equal{#1}{\getitemvsr{inv}{\theinvtcnt}{1}}}{%
-			\scriptsize\getitemvsr{inv}{\theinvtcnt}{0} & \scriptsize\getitemvsr{inv}{\theinvtcnt}{1} & \scriptsize\getitemvsr{inv}{\theinvtcnt}{2}\\\hline
+%			\scriptsize\getitemvsr{inv}{\theinvtcnt}{0} & \scriptsize\getitemvsr{inv}{\theinvtcnt}{1} & \scriptsize\getitemvsr{inv}{\theinvtcnt}{2}\\\hline
+			\csuse{maketab#2}{\theinvtcnt}
 			}{%
-			\ifthenelse{\equal{<EndOfDatabase>}{\getitemvsr{inv}{\theinvtcnt}{1}}}{%
+			\ifthenelse{\equal{\getitemvsr{inv}{\theinvtcnt}{1}}{}}{%
 				\setcounter{invtcnt}{-1}}{%
 				}
 			}
@@ -117,7 +132,7 @@
 
 %% Find TAGs in inventory : requires an array of arguments (of type 'item'), the TAGs to look for
 \newcounter{ntags}
-\newcommand\invfindtags[1]{%
+\newcommand\invfindtags[2]{%
 %	\newcounter{invtcnt}
 %	\ifthenelse{\equal{#1-ntags}{\getitemvsr{inv}{\theinvtcnt}{1}}}{
 %	}{
@@ -136,7 +151,7 @@
 		{%
 			\setcounter{ntags}{-1}
 		}{%
-		\invfindtag{\csuse{get#1}{\thentags}}
+		\invfindtag{\csuse{get#1}{\thentags}}{#2}
 		}
 	}
 }
@@ -214,17 +229,22 @@
 %\mainmatter
 
 
+%% Generic Counters used throughout the document
+\newcounter{doccnta}
+\newcounter{doccntb}
+
 %%% Actual Document Start at below
 \chapter{Hardware Components}
 The Device Under Test (from now on simply referred by DUT) is a \ESSitemid \space \ESSfattype \space comprising the following components \ifESSproperty which are property of \ESScompanyproperty \fi :
 \newline
-\newcounter{hcnum}
-\newcounter{hcrownum}
+%\newcounter{hcnum}
+%\newcounter{hcrownum}
 \begin{table}[!hb]
 	\centering
-	\begin{tabular}{>{\raggedright}p{0.2\textwidth}|p{0.15\textwidth}|p{0.55\textwidth}}\rowcolor{gray!10}
+%	\begin{tabular}{>{\raggedright}p{0.2\textwidth}|p{0.15\textwidth}|p{0.55\textwidth}}\rowcolor{gray!10}
+	\begin{tabular}{p{0.2\textwidth}|p{0.15\textwidth}|p{0.55\textwidth}}\rowcolor{gray!10}
 		Name & ICS-TAG & Vendor Documentation \\\hline
-		\scriptsize\ESSitemid & \scriptsize\ESSitemtag & \scriptsize\ESSitemvendoc \\\hline
+%		\scriptsize\ESSitemid & \scriptsize\ESSitemtag & \scriptsize\ESSitemvendoc \\\hline
 %		\forloop{hcnum}{1}{\value{hcnum} < \ESShcnum}{
 %		\invfindtag{\getitem{1}}
 %		\forloop[1]{hcnum}{1}{\value{hcnum} > 0}{%
@@ -235,27 +255,121 @@ The Device Under Test (from now on simply referred by DUT) is a \ESSitemid \spac
 %			\invfindtag{\getitem{\thehcnum}}
 %			}
 %		}
-		\invfindtags{item}
+		\invfindtags{item}{hwlist}
 	\end{tabular}
 \end{table}
+\FloatBarrier	
 	
 	
 	
 	
 	
-	
-\section{Scope}
-\begin{itemize}
-\item This document provides a brief overview of the IFC1211 main features and describes the necessary steps to boot-up a basic system.
-\item This document provides the information to create and compile a U-boot script to be used at startup to load configuration settings from a server. 
-\item The purpose of this document is to describe the engineering procedure and troubleshooting about how the IFC1211 board will be booted up and how to import the ESS EPICS Environment (EEE).
-\iffalse
-\item This document provides a short appendix with the necessary steps to setup a server that provides tftp and nfs functionalities (required).
-\fi
-\end{itemize}
-\textbf{Note that this is a very early draft document and should be updated as development progresses.}
+\section{HW Visual Inspection}
+%\begin{itemize}
+%\item 
+%\item  
+%\item 
+%\end{itemize}
+\begin{table}[!hb]
+	\centering
+	\begin{tabular}{p{0.25\textwidth} p{0.2\textwidth} p{0.2\textwidth} p{0.15\textwidth} p{0.05\textwidth} p{0.15\textwidth}}\rowcolor{gray!10}
+		Name & ICS-TAG & & \multicolumn{1}{c}{Pass} & & \multicolumn{1}{c}{Fail} \\\hline
+		\invfindtags{item}{hwvilist}
+	\end{tabular}
+\end{table}
 
-\section{Target Audience}
+
+
+
+\section{HW Functional Test}
+\begin{table}[!hb]
+	\centering
+	\begin{tabular}{p{0.25\textwidth} p{0.2\textwidth} p{0.2\textwidth} p{0.15\textwidth} p{0.05\textwidth} p{0.15\textwidth}}\rowcolor{gray!10}
+		Name & ICS-TAG & & \multicolumn{1}{c}{Pass} & & \multicolumn{1}{c}{Fail} \\\hline
+		\invfindtags{item}{hwftlist}
+	\end{tabular}
+\end{table}
+\FloatBarrier
+
+
+\newpage
+\chapter{Software}
+The DUT is provided with the following software already installed :
+\begin{table}[!hb]
+\centering
+\begin{tabular}{p{0.25\textwidth} | p{0.1\textwidth} p{0.05\textwidth} p{0.45\textwidth}}\rowcolor{gray!10}
+	Name            & \multicolumn{3}{c}{Information} \\\hline
+	Kernel          & Version   & : & 3.10.0-229.7.2.el7.x86\_64 \\\hline
+	CentOS          & Version   & : & 7.1.1503 \\\hline
+	JAVA            & Version   & : & 1.8.0\_40 \\\hline
+	CS Studio       & Version   & : &  \\\hline
+	EPICS Bases     & Path      & : & /opt/epics/bases \\\hline
+	EPICS Modules   & Path      & : & /opt/epics/modules \\\hline
+	EPICS Host Arch &           & : & centos7-x86\_64 \\\hline
+	EPICS BASE      & Path      & : & /opt/epics/bases/base-3.15.4 \\\hline
+	EPICS\_ENV\_PATH  & Path      & : & \seqsplit{/opt/epics/modules/environment/1.8.2/3.15.4/bin/centos7-x86\_64} \\\hline
+\end{tabular}
+\end{table}
+
+
+\section{SW Verification}
+\begin{table}[!hb]
+	\centering
+	\begin{tabular}{p{0.3\textwidth} p{0.4\textwidth} p{0.15\textwidth} p{0.05\textwidth} p{0.15\textwidth}}\rowcolor{gray!10}
+		Name            & Check for & \multicolumn{1}{c}{Pass} & & \multicolumn{1}{c}{Fail} \\\hline
+		Kernel          & Version   & \multicolumn{1}{c}{\checkbox} & & \multicolumn{1}{c}{\checkbox} \\
+		CentOS          & Version   & \multicolumn{1}{c}{\checkbox} & & \multicolumn{1}{c}{\checkbox} \\
+		JAVA            & Version   & \multicolumn{1}{c}{\checkbox} & & \multicolumn{1}{c}{\checkbox} \\
+		CS Studio       & Version   & \multicolumn{1}{c}{\checkbox} & & \multicolumn{1}{c}{\checkbox} \\
+		EPICS Bases     & Path      & \multicolumn{1}{c}{\checkbox} & & \multicolumn{1}{c}{\checkbox} \\
+		EPICS Modules   & Path      & \multicolumn{1}{c}{\checkbox} & & \multicolumn{1}{c}{\checkbox} \\
+		EPICS Host Arch &           & \multicolumn{1}{c}{\checkbox} & & \multicolumn{1}{c}{\checkbox} \\
+		EPICS BASE      & Path      & \multicolumn{1}{c}{\checkbox} & & \multicolumn{1}{c}{\checkbox} \\
+		EPICS\_ENV\_PATH  & Path    & \multicolumn{1}{c}{\checkbox} & & \multicolumn{1}{c}{\checkbox} \\
+	\end{tabular}
+\end{table}
+
+\section{Additional Modules}
+The following additional modules are provided :
+\begin{table}[!hb]
+	\centering
+	\begin{tabular}{p{0.2\textwidth} | p{0.2\textwidth} p{0.05\textwidth} p{0.45\textwidth}}\rowcolor{gray!10}
+		Name            & \multicolumn{3}{c}{Information} \\\hline
+		mrf.ko          & src Version   & : & 9E849DD3775C8555B8B88BF \\\hline
+	\end{tabular}
+\end{table}
+
+\subsection{Additional Modules Verification}
+\begin{table}[!hb]
+	\centering
+	\begin{tabular}{p{0.3\textwidth} p{0.4\textwidth} p{0.15\textwidth} p{0.05\textwidth} p{0.15\textwidth}}\rowcolor{gray!10}
+		Name            & Check for        & \multicolumn{1}{c}{Pass} & & \multicolumn{1}{c}{Fail} \\\hline
+		mrf.ko          & src Version      & \multicolumn{1}{c}{\checkbox} & & \multicolumn{1}{c}{\checkbox} \\
+		                & Load at startup  & \multicolumn{1}{c}{\checkbox} & & \multicolumn{1}{c}{\checkbox} \\
+		                & user Permission  & \multicolumn{1}{c}{\checkbox} & & \multicolumn{1}{c}{\checkbox} \\
+	\end{tabular}
+\end{table}
+\FloatBarrier
+
+
+\newpage
+\chapter{Conclusions}
+\begin{table}[!hb]
+	\centering\large
+	\begin{tabular}{|>{\raggedright}p{0.5\textwidth}|p{0.4\textwidth}|}\firsthline
+		Factory Acceptance Test result &  \\\hline
+	\end{tabular}
+\end{table}
+\normalsize
+%\bfseries{Additional Notes:}
+\begin{center}\bfseries{Additional Notes:} \hrulefill \end{center}
+\forloop{doccnta}{1}{\value{doccnta} < 20}{
+\begin{center}\hrulefill \end{center}}
+
+
+
+\iffalse
+
 This document is targeted to ICS engineers and technical stakeholders of the ESS IOCs. %It is assumed that the target audience has a technical background in the EPICS development and Linux environment.
 
 \chapter{System Description}
@@ -1171,6 +1285,8 @@ This will make U-boot wait for 5 seconds at every startup to see if the user wan
 \bibliographystyle{unsrtnat}
 %\bibliographystyle{chicago}
 \bibliography{./ess_refs}
+\fi
+
 
 \end{document}
 

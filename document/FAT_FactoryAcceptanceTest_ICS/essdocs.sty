@@ -59,6 +59,7 @@
 \RequirePackage{forloop}
 \RequirePackage{etoolbox}
 \RequirePackage{xifthen}
+\RequirePackage{seqsplit}
 
 %\RequirePackage{datetime}
 %\RequirePackage{fmtcount}
@@ -155,8 +156,8 @@
 	{\miniscule
 	\vskip 2em%
 	\begin{tabular}{p{0.14\linewidth} p{0.14\linewidth} p{0.18\linewidth} p{0.17\linewidth} p{0.02\linewidth} p{0.17\linewidth}}
-		Operator          & & & Operator Signature & & Quality Manager \\
-		\multicolumn{2}{c}{\@eesoperator}   & & & & Signature       \\
+		Operator          & & & \multicolumn{3}{l}{Signature for acknowledgement and acceptance} \\
+		\multicolumn{2}{c}{\@eesoperator}   & & Operator & & Quality Manager  \\
 		& & & & &                 \\
 		Quality Manager   & & & & & 	            \\
 		\multicolumn{2}{c}{\@essqualitym}   & & & & 	\\\cline{4-4}\cline{6-6}	
@@ -175,8 +176,10 @@
 {\miniscule
 	\vskip 2em%
 	\begin{tabular}{p{0.14\linewidth} p{0.14\linewidth} p{0.18\linewidth} p{0.17\linewidth} p{0.02\linewidth} p{0.17\linewidth}}
-		Operator          & & & Operator Signature & & Quality Manager \\
-		\multicolumn{2}{c}{\@eesoperator}   & & & & Signature       \\
+%		Operator          & & & Operator Signature & & Quality Manager \\
+%		\multicolumn{2}{c}{\@eesoperator}   & & & & Signature       \\
+		Operator          & & & \multicolumn{3}{l}{Signature for acknowledgement and acceptance} \\
+		\multicolumn{2}{c}{\@eesoperator}   & & Operator & & Quality Manager  \\
 		& & & & &                 \\
 		Quality Manager   & & & & & 	            \\
 		\multicolumn{2}{c}{\@essqualitym}   & & & & 	\\\cline{4-4}\cline{6-6}	
@@ -368,3 +371,7 @@
 
 \lstset{style=termstyle}
 \lstset{escapeinside={(*@}{@*)}}
+
+
+\newcommand{\checkbox}{\text{\fboxsep=-.15pt\fbox{\rule{0pt}{1.5ex}\rule{1.5ex}{0pt}}}}
+
